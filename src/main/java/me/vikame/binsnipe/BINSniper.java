@@ -42,7 +42,8 @@ public class BINSniper {
     timeLastUpdated = new AtomicLong(-1);
     binPrices = new ConcurrentHashMap<>();
 
-    flipsAlreadyShown = new ExpiringSet<>(60000 * 30); // No need for a concurrent map we will only access this in a single thread.
+    flipsAlreadyShown = new ExpiringSet<>(
+        60000 * 30); // No need for a concurrent map we will only access this in a single thread.
 
     totalAuctions = new AtomicInteger();
     totalBins = new AtomicInteger();
@@ -52,7 +53,7 @@ public class BINSniper {
 
     Main.schedule(() -> {
       long lastUpdateTime = timeLastUpdated.get();
-      if((System.currentTimeMillis()-lastUpdateTime) > 60000) {
+      if ((System.currentTimeMillis() - lastUpdateTime) > 60000) {
         getAuctions(0);
         long newUpdateTime = timeLastUpdated.get();
 
@@ -64,28 +65,37 @@ public class BINSniper {
           final int maxPages = totalPages.get();
 
           long start = System.currentTimeMillis();
-          for(int page = 0; page < maxPages; page++){
+          for (int page = 0; page < maxPages; page++) {
             final int workingPage = page;
             Main.exec(() -> {
-              if (workingPage < totalPages.get()) { // Ensure that this is still a valid page we need to look at.
+              if (workingPage
+                  < totalPages.get()) { // Ensure that this is still a valid page we need to look at.
                 LazyArray auctionArray = getAuctions(workingPage);
 
-                for(int i = 0; i < auctionArray.length(); i++) {
+                for (int i = 0; i < auctionArray.length(); i++) {
                   LazyObject binData = auctionArray.getJSONObject(i);
-                  if (!SBHelper.isExistingBIN(binData))
+                  if (!SBHelper.isExistingBIN(binData)) {
                     continue;
+                  }
 
                   String name = SBHelper.stripItemName(binData);
 
-                  if(Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) continue;
-                  if(Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) continue;
+                  if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) {
+                    continue;
+                  }
+                  if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) {
+                    continue;
+                  }
 
-                  name += " [" + binData.getString("tier") + (SBHelper.isRecombed(binData) ? ", RECOMB" : "") + "]";
+                  name +=
+                      " [" + binData.getString("tier") + (SBHelper.isRecombed(binData) ? ", RECOMB"
+                          : "") + "]";
 
                   String uuid = binData.getString("uuid");
                   int price = binData.getInt("starting_bid");
 
-                  binPrices.computeIfAbsent(name, ign -> new AtomicPrice()).tryUpdatePrice(uuid, price);
+                  binPrices.computeIfAbsent(name, ign -> new AtomicPrice())
+                      .tryUpdatePrice(uuid, price);
                   totalBins.incrementAndGet();
                 }
               }
@@ -118,19 +128,23 @@ public class BINSniper {
           int maxDiff = -1;
 
           for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
-            if(flipsAlreadyShown.contains(entry.getKey())) continue;
+            if (flipsAlreadyShown.contains(entry.getKey())) {
+              continue;
+            }
 
             AtomicPrice price = entry.getValue();
             int lowest = price.getLowestValue();
             int second = price.getSecondLowestValue();
 
-            if (price.getTotalCount() > Config.MIN_ITEMS_ON_MARKET && second >= Config.MIN_BIN_PRICE && lowest <= Config.MAX_BIN_PRICE) {
+            if (price.getTotalCount() > Config.MIN_ITEMS_ON_MARKET && second >= Config.MIN_BIN_PRICE
+                && lowest <= Config.MAX_BIN_PRICE) {
               int secondWithTaxes = SBHelper.calculateWithTaxes(second);
 
               int diff = secondWithTaxes - lowest;
               float profitPercentage = ((float) secondWithTaxes / (float) lowest) * 100.0f;
 
-              if (profitPercentage >= Config.MIN_PROFIT_PERCENTAGE || diff >= Config.MIN_PROFIT_AMOUNT) {
+              if (profitPercentage >= Config.MIN_PROFIT_PERCENTAGE
+                  || diff >= Config.MIN_PROFIT_AMOUNT) {
                 if (diff > maxDiff) {
                   maxDiff = diff;
                   highestProfit = entry;
@@ -152,16 +166,17 @@ public class BINSniper {
             float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
             System.out.println(price.getLowestKey() + " | Item: " + highestProfit.getKey()
-                    + " | # BIN'd on AH: " + price.getTotalCount()
-                    + " | Price: " + NumberFormat.getInstance().format(lowest)
-                    + " | Second lowest: " + NumberFormat.getInstance().format(second)
-                    + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
-                    + profitPercentage + "%) (" + (System.currentTimeMillis()-start) + "ms)");
+                + " | # BIN'd on AH: " + price.getTotalCount()
+                + " | Price: " + NumberFormat.getInstance().format(lowest)
+                + " | Second lowest: " + NumberFormat.getInstance().format(second)
+                + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
+                + profitPercentage + "%) (" + (System.currentTimeMillis() - start) + "ms)");
 
             Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection("/viewauction " + price.getLowestKey()), null);
           } else {
-            System.out.println("we were unable to find a flip after " + (System.currentTimeMillis() - timeLastUpdated.get()) + " ms.");
+            System.out.println("we were unable to find a flip after " + (System.currentTimeMillis()
+                - timeLastUpdated.get()) + " ms.");
           }
 
           System.out.println();
@@ -171,11 +186,13 @@ public class BINSniper {
   }
 
   private LazyArray getAuctions(int page) {
-    String targetURL = Constants.AUCTIONS_ENDPOINT + "?page=" + page + (Config.FORCE_NO_CACHE_API_REQUESTS ? "&_=" + System.currentTimeMillis() : "");
+    String targetURL =
+        Constants.AUCTIONS_ENDPOINT + "?page=" + page + (Config.FORCE_NO_CACHE_API_REQUESTS ? "&_="
+            + System.currentTimeMillis() : "");
     URL apiURL;
-    try{
+    try {
       apiURL = new URL(targetURL);
-    }catch(MalformedURLException e) {
+    } catch (MalformedURLException e) {
       e.printStackTrace();
       System.err.println("Malformed URL '" + targetURL + "'");
       System.exit(1);
@@ -185,14 +202,15 @@ public class BINSniper {
     try {
       HttpURLConnection connection = (HttpURLConnection) apiURL.openConnection();
       connection.setRequestMethod("GET");
-      connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36");
+      connection.setRequestProperty("User-Agent",
+          "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36");
       connection.setRequestProperty("Content-Type", "application/json");
 
-      if(Config.USE_GZIP_COMPRESSION_ON_API_REQUESTS) {
+      if (Config.USE_GZIP_COMPRESSION_ON_API_REQUESTS) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
       }
 
-      if(Config.FORCE_NO_CACHE_API_REQUESTS) {
+      if (Config.FORCE_NO_CACHE_API_REQUESTS) {
         connection.setRequestProperty("Cache-Control", "no-cache");
         connection.setRequestProperty("Pragma", "no-cache");
         connection.setUseCaches(false);
@@ -201,27 +219,32 @@ public class BINSniper {
       connection.connect();
 
       BufferedReader responseStreamReader;
-      if(connection.getContentEncoding().equalsIgnoreCase("gzip")) {
+      if (connection.getContentEncoding().equalsIgnoreCase("gzip")) {
         responseStreamReader = new BufferedReader(new InputStreamReader(new GZIPInputStream(
             connection.getInputStream())));
       } else {
-        responseStreamReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+        responseStreamReader = new BufferedReader(
+            new InputStreamReader(connection.getInputStream()));
       }
 
       StringBuilder response = new StringBuilder();
 
       int ch;
-      while((ch = responseStreamReader.read()) != -1) response.append((char) ch);
+      while ((ch = responseStreamReader.read()) != -1) {
+        response.append((char) ch);
+      }
 
       connection.disconnect();
       responseStreamReader.close();
 
       LazyObject responseJsonObject = new LazyObject(response.toString());
-      if(!responseJsonObject.getBoolean("success")) return null;
+      if (!responseJsonObject.getBoolean("success")) {
+        return null;
+      }
 
       long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
 
-      if(timeLastUpdated > this.timeLastUpdated.get()) {
+      if (timeLastUpdated > this.timeLastUpdated.get()) {
         this.timeLastUpdated.set(timeLastUpdated);
         this.totalPages.set(responseJsonObject.getInt("totalPages"));
         this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
@@ -237,23 +260,23 @@ public class BINSniper {
   }
 
   public void printLoadingBar(float progress) {
-    int segments = (int)Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
+    int segments = (int) Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
     System.out.print("\r[");
-    for(int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
-      if(i < segments-1) {
+    for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
+      if (i < segments - 1) {
         System.out.print('=');
-      } else if (i == segments-1) {
+      } else if (i == segments - 1) {
         System.out.print('>');
       } else {
         System.out.print(' ');
       }
     }
-    System.out.print("] " + (int)(Math.ceil(progress * 100.0F)) + "%");
+    System.out.print("] " + (int) (Math.ceil(progress * 100.0F)) + "%");
   }
 
   public void clearLoadingBar() {
     System.out.print("\r ");
-    for(int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
+    for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
       System.out.print(' ');
     }
     System.out.print("      \r");

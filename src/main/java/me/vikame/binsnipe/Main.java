@@ -22,14 +22,19 @@ public class Main {
 
   public static void main(String[] args) throws IOException {
     Console console = System.console();
-    if(console == null && !GraphicsEnvironment.isHeadless()){ // Ensure we have a console window to work with!
-      String filename = Main.class.getProtectionDomain().getCodeSource().getLocation().toString().substring(6);
+    if (console == null
+        && !GraphicsEnvironment.isHeadless()) { // Ensure we have a console window to work with!
+      String filename = Main.class.getProtectionDomain().getCodeSource().getLocation().toString()
+          .substring(6);
 
       StringBuilder allArgs = new StringBuilder();
-      for(String str : args) allArgs.append(str).append(' ');
+      for (String str : args) {
+        allArgs.append(str).append(' ');
+      }
 
-      Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k", "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
-    }else {
+      Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
+          "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
+    } else {
       /* Setting pooled_thread_count to be too high can result in slower speeds depending on the capabilities of your network connection.
        * From the tests I have done, I have noted the values I would recommend you use below.
        *

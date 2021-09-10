@@ -1,8 +1,5 @@
 package me.vikame.binsnipe;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Config {
 
   /* Whether to add the "Accept-Encoding: gzip" header to API requests.

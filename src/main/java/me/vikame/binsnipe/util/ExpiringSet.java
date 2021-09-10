@@ -17,7 +17,7 @@ public class ExpiringSet<T> implements Set<T> {
   }
 
   private void expire() {
-    entries.entrySet().removeIf(entry -> entry.getValue()-System.currentTimeMillis() <= 0L);
+    entries.entrySet().removeIf(entry -> entry.getValue() - System.currentTimeMillis() <= 0L);
   }
 
   @Override
@@ -59,7 +59,7 @@ public class ExpiringSet<T> implements Set<T> {
   @Override
   public boolean add(T t) {
     expire();
-    entries.put(t, System.currentTimeMillis()+timer);
+    entries.put(t, System.currentTimeMillis() + timer);
     return true;
   }
 
@@ -72,8 +72,10 @@ public class ExpiringSet<T> implements Set<T> {
   @Override
   public boolean containsAll(Collection<?> c) {
     expire();
-    for(Object o : c) {
-      if(!entries.containsKey(o)) return false;
+    for (Object o : c) {
+      if (!entries.containsKey(o)) {
+        return false;
+      }
     }
 
     return true;
@@ -82,7 +84,7 @@ public class ExpiringSet<T> implements Set<T> {
   @Override
   public boolean addAll(Collection<? extends T> c) {
     expire();
-    for(T t : c) {
+    for (T t : c) {
       add(t);
     }
 
