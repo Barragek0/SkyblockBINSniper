@@ -30,7 +30,7 @@ public class Config {
   public static final int MIN_ITEMS_ON_MARKET = 2;
 
   // The maximum price you are willing to pay for an item to flip.
-  public static final int MAX_BIN_PRICE = 40_000_000;
+  public static final int MAX_BIN_PRICE = Integer.MAX_VALUE;
 
   // The minimum price the item to be flipped must be able to sell for.
   public static final int MIN_BIN_PRICE = 1_000_000;
