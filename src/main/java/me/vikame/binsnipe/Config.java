@@ -3,7 +3,7 @@ package me.vikame.binsnipe;
 public class Config {
 
   /* Whether to add the "Accept-Encoding: gzip" header to API requests.
-   * I would highly recommend against disabling this as it greatly reduces bandwith usage.
+   * I would highly recommend against disabling this as it greatly reduces bandwith usage when enabled.
    */
   public static final boolean USE_GZIP_COMPRESSION_ON_API_REQUESTS = true;
 
@@ -13,7 +13,7 @@ public class Config {
    * alongside a cache-buster parameter within the API request URL.
    *
    * I would recommend keeping this disabled, but if you do not care about your bandwith usage you
-   * may see a speed-up from enabling this setting.
+   * *may* see a speed-up from enabling this setting.
    */
   public static final boolean FORCE_NO_CACHE_API_REQUESTS = false;
 
@@ -23,7 +23,7 @@ public class Config {
   // Whether to ignore cosmetic items, as these are commonly market-manipulated.
   public static final boolean IGNORE_COSMETICS = true;
 
-  // Whether to treat all dungeonizable items as if they were starless.
+  // Whether to treat all "dungeonizable" items as if they were starless.
   public static final boolean STRIP_STARS = false;
 
   // The minimum number of the same item that must be on the market to be considered for a flip.

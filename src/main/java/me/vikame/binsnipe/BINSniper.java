@@ -43,7 +43,7 @@ public class BINSniper {
     binPrices = new ConcurrentHashMap<>();
 
     flipsAlreadyShown = new ExpiringSet<>(
-        60000 * 30); // No need for a concurrent map we will only access this in a single thread.
+        60000 * 30);
 
     totalAuctions = new AtomicInteger();
     totalBins = new AtomicInteger();
@@ -175,7 +175,7 @@ public class BINSniper {
             Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection("/viewauction " + price.getLowestKey()), null);
           } else {
-            System.out.println("we were unable to find a flip after " + (System.currentTimeMillis()
+            System.out.println("Unable to find a flip after " + (System.currentTimeMillis()
                 - timeLastUpdated.get()) + " ms.");
           }
 
