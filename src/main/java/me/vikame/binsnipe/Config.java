@@ -5,6 +5,9 @@ public class Config {
   // The number of threads to use for JSON & auction data parsing when finding flips.
   public static int POOLED_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
 
+  // Whether to play a "beep" sound when a flip has been found.
+  public static boolean BEEP_WHEN_FLIP_FOUND = true;
+
   /* Whether to add the "Accept-Encoding: gzip" header to API requests.
    * I would highly recommend against disabling this as it greatly reduces bandwith usage when enabled.
    */

@@ -207,6 +207,10 @@ public class BINSniper {
 
             Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection("/viewauction " + price.getLowestKey()), null);
+
+            if (Config.BEEP_WHEN_FLIP_FOUND) {
+              Toolkit.getDefaultToolkit().beep();
+            }
           } else {
             System.out.println("Unable to find a flip after " + (System.currentTimeMillis()
                 - timeLastUpdated.get()) + " ms.");

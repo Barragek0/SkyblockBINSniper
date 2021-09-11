@@ -25,8 +25,9 @@ that the JVM has available.
 
 ### Step 3
 
-When a snipe has been found, the command to view the auction will be copied to your clipboard. Paste
-this into your chat in game, and purchase the item. Be careful of market manipulation.
+When a snipe has been found, a sound will play, and the command to view the auction will be copied
+to your clipboard. Paste this into your chat in game, and purchase the item. Be careful of market
+manipulation.
 
 ## Configurability
 
