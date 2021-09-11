@@ -122,6 +122,12 @@ public class Main {
     }
   }
 
+  public static void printDebug(String line) {
+    if (Config.DEBUG) {
+      System.out.println(line);
+    }
+  }
+
   public static ScheduledExecutorService pool() {
     return THREAD_POOL;
   }

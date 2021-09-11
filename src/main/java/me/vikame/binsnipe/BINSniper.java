@@ -92,8 +92,7 @@ public class BINSniper {
 
                     String itemId;
                     StringBuilder itemName = new StringBuilder(
-                        SBHelper.stripInvalidChars(binData.getString("item_name"))
-                            .replace("✪", ""));
+                        SBHelper.stripInvalidChars(binData.getString("item_name")));
 
                     try {
                       NBTCompound itemData = NBTReader.readBase64(binData.getString("item_bytes"))
@@ -110,12 +109,27 @@ public class BINSniper {
                       boolean recombed = skyblockAttributes.getInt("rarity_upgrades", 0) > 0;
                       int hotPotatoBooks = skyblockAttributes.getInt("hot_potato_count", 0);
                       int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
+                      String skin = skyblockAttributes.getString("skin");
+
+                      if (Config.IGNORE_STARS && id.startsWith("STARRED_")) {
+                        id = id.substring(8);
+                      }
+
+                      if (id.equalsIgnoreCase("PET")) {
+                        LazyObject petInfo = new LazyObject(
+                            skyblockAttributes.getString("petInfo"));
+
+                        String type = petInfo.getString("type");
+                        id = "PET_" + type;
+                        skin = petInfo.has("skin") ? petInfo.getString("skin") : null;
+                      }
 
                       itemId = id
                           + (Config.IGNORE_RECOMB ? "" : "|" + recombed)
                           + (Config.IGNORE_REFORGES ? "" : "|" + reforge)
                           + (Config.IGNORE_HOT_POTATO ? "" : "|" + hotPotatoBooks)
-                          + (Config.IGNORE_STARS ? "" : "|" + stars);
+                          + (Config.IGNORE_STARS ? "" : "|" + stars)
+                          + (Config.IGNORE_SKINS ? "" : "|" + skin);
 
                       for (int star = 0; star < stars; star++) {
                         itemName.append("*");
@@ -123,16 +137,25 @@ public class BINSniper {
 
                       itemName.append(" [").append(binData.getString("tier"))
                           .append(recombed ? ", RECOMB" : "").append("]");
+
+                      if (skin != null) {
+                        itemName.append(" [").append(skin).append("]");
+                      }
                     } catch (Exception e) {
                       e.printStackTrace();
                       continue;
                     }
 
+                    String filteredName = itemName.toString()
+                        .replace("✪", "")
+                        .replace(" ✦", "")
+                        .replace("⚚", "Fragged");
+
                     String uuid = binData.getString("uuid");
                     int price = binData.getInt("starting_bid");
 
                     binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
-                        .tryUpdatePrice(itemName.toString(), uuid, price);
+                        .tryUpdatePrice(filteredName, uuid, price);
                     totalBins.incrementAndGet();
                   }
                 }
@@ -184,6 +207,8 @@ public class BINSniper {
 
               if (profitPercentage >= Config.MIN_PROFIT_PERCENTAGE
                   || diff >= Config.MIN_PROFIT_AMOUNT) {
+                Main.printDebug("Found flippable item '" + entry.getKey() + "' (" + entry.getValue()
+                    .getLowestItemName() + ")");
                 if (diff > maxDiff) {
                   maxDiff = diff;
                   highestProfit = entry;

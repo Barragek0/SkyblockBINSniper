@@ -23,7 +23,8 @@ public class SBHelper {
   }
 
   public static String stripInvalidChars(String itemName) {
-    return itemName.replaceAll("\\p{C}}", "");
+    return Constants.STRIP_COLOR_PATTERN.matcher(itemName).replaceAll("")
+        .replaceAll("\\p{C}}", "");
   }
 
   public static String stripItemName(LazyObject object) {

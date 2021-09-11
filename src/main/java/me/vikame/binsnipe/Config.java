@@ -41,6 +41,9 @@ public class Config {
   // Whether to ignore whether an item has hot potato books applied.
   public static boolean IGNORE_HOT_POTATO = true;
 
+  // Whether to treat skinned items as if they weren't skinned.
+  public static boolean IGNORE_SKINS = true;
+
   // Whether to treat recombobulated as their base rarity.
   public static boolean IGNORE_RECOMB = false;
 
@@ -48,7 +51,7 @@ public class Config {
   public static int MIN_ITEMS_ON_MARKET = 3;
 
   // The maximum price you are willing to pay for an item to flip.
-  public static int MAX_BIN_PRICE = 70_000_000;
+  public static int MAX_BIN_PRICE = Integer.MAX_VALUE;
 
   // The minimum price the item to be flipped must be able to sell for.
   public static int MIN_BIN_PRICE = 1_000_000;
@@ -58,6 +61,9 @@ public class Config {
   public static int MIN_PROFIT_AMOUNT = 1_000_000;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe progress.
-  public static final transient int LOADING_BAR_SEGMENTS = 40;
+  public static transient int LOADING_BAR_SEGMENTS = 40;
+
+  // Whether to enable debug logging. Do note that this could be spammy and is not meant to be used normally.
+  public static transient boolean DEBUG = false;
 
 }
