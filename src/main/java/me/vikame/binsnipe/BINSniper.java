@@ -86,6 +86,9 @@ public class BINSniper {
                     if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) {
                       continue;
                     }
+                    if (Config.IGNORE_USED_CAKE_SOULS && SBHelper.isUsedCakeSoul(binData)) {
+                      continue;
+                    }
 
                     String itemId;
                     StringBuilder itemName = new StringBuilder(

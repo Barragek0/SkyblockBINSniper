@@ -57,6 +57,14 @@ public class SBHelper {
     return itemLore.endsWith("§ka");
   }
 
+  public static boolean isUsedCakeSoul(LazyObject object) {
+    return isUsedCakeSoul(object.getString("item_lore"));
+  }
+
+  public static boolean isUsedCakeSoul(String itemLore) {
+    return itemLore.startsWith("§dCake Soul");
+  }
+
   public static boolean isFurniture(LazyObject object) {
     return isFurniture(object.getString("item_lore"));
   }

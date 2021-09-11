@@ -29,6 +29,9 @@ public class Config {
   // Whether to ignore cosmetic items, as these are commonly market-manipulated.
   public static boolean IGNORE_COSMETICS = true;
 
+  // Whether to ignore used cake souls, as these are more likely than not over-priced or will never sell.
+  public static boolean IGNORE_USED_CAKE_SOULS = true;
+
   // Whether to treat all "dungeonizable" items as if they were starless.
   public static boolean IGNORE_STARS = false;
 
@@ -42,7 +45,7 @@ public class Config {
   public static int MIN_ITEMS_ON_MARKET = 3;
 
   // The maximum price you are willing to pay for an item to flip.
-  public static int MAX_BIN_PRICE = Integer.MAX_VALUE;
+  public static int MAX_BIN_PRICE = 70_000_000;
 
   // The minimum price the item to be flipped must be able to sell for.
   public static int MIN_BIN_PRICE = 1_000_000;
