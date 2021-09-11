@@ -41,6 +41,9 @@ public class Config {
   // Whether to ignore whether an item has hot potato books applied.
   public static boolean IGNORE_HOT_POTATO = true;
 
+  // Whether to treat recombobulated as their base rarity.
+  public static boolean IGNORE_RECOMB = false;
+
   // The minimum number of the same item that must be on the market to be considered for a flip.
   public static int MIN_ITEMS_ON_MARKET = 3;
 

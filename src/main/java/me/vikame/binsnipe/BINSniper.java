@@ -111,7 +111,8 @@ public class BINSniper {
                       int hotPotatoBooks = skyblockAttributes.getInt("hot_potato_count", 0);
                       int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
 
-                      itemId = id + "|" + recombed
+                      itemId = id
+                          + (Config.IGNORE_RECOMB ? "" : "|" + recombed)
                           + (Config.IGNORE_REFORGES ? "" : "|" + reforge)
                           + (Config.IGNORE_HOT_POTATO ? "" : "|" + hotPotatoBooks)
                           + (Config.IGNORE_STARS ? "" : "|" + stars);
