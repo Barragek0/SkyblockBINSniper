@@ -20,14 +20,36 @@ Visit https://github.com/Vikame/SkyblockBINSniper/releases and download the late
 Double-click the JAR to run the program. It will open a command prompt with the sniper output.
 
 You may also run the JAR file via the command line using ``java -jar <PATH_TO_JAR> [thread_count]``
-to control the number of threads used by the program, which by default is the number of processors that the JVM has available.
+to control the number of threads used by the program, which by default is the number of processors
+that the JVM has available.
 
 ### Step 3
-When a snipe has been found, the command to view the auction will be copied to your clipboard. Paste this into your chat in game, and purchase the item. Be careful of market manipulation.
+
+When a snipe has been found, the command to view the auction will be copied to your clipboard. Paste
+this into your chat in game, and purchase the item. Be careful of market manipulation.
 
 ## Configurability
 
-Currently, other than the number of threads the sniper will use, there is no support for configuring the sniper outside compiling the project with your changes.
-Almost all aspects of the sniper that I thought should be configurable can be modified in the ``me.vikame.binsnipe.Config`` class, and all of which should be documented.
+All configuration data for the sniper can be found in the same folder you placed the JAR. All core
+aspects of the sniper can be modified via this file, including profit margins, whether you wish to
+filter skins or furniture, and more. The two main values you should be interested in
+are ``MIN_PROFIT_AMOUNT`` and ``MIN_PROFIT_PERCENTAGE``.
 
-If you wish to modify the sniper, you can do so by downloading the source code from https://github.com/Vikame/SkyblockBINSniper/releases
+The default values within this file are my personal recommendations. If you do not know what a
+setting does, you can consult the documentation within ``me.vikame.binsnipe.Config`` or simply leave
+it alone.
+
+## Other
+
+Due to the sheer size of the JSON response from the Hypixel API, any auction sniper will put quite a
+load on your network connection, and my sniper is no different. If the sniper consumes *too* much of
+your overall bandwith, you can consider changing the ``POOLED_THREAD_COUNT`` to be lower within your
+sniper configuration, which will slow down the overall speed of the sniper but should reduce the
+load on your network.
+
+If the sniper is still too much of a load, you should make
+sure ``USE_GZIP_COMPRESSION_ON_API_REQUESTS`` is set to ``true`` and
+that ``FORCE_NO_CACHE_API_REQUESTS`` is set to ``false`` within your sniper configuration.
+
+If you wish to modify the sniper, you can do so by downloading the source code
+from https://github.com/Vikame/SkyblockBINSniper/releases

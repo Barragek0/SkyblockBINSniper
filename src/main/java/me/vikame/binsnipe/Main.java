@@ -41,32 +41,6 @@ public class Main {
       Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
           "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
     } else {
-      /* Setting pooled_thread_count to be too high can result in slower speeds depending on the capabilities of your network connection.
-       * From the tests I have done, I have noted the values I would recommend you use below.
-       *
-       * Maximum speed:  1 thread per 12.50Mb/s
-       * Moderate speed: 1 thread per 16.67Mb/s
-       * General speed:  1 thread per 25.00Mb/s
-       *
-       * As an example, my own internet connection has a download speed of ~100.0Mb/s, and would mean that for the above values I would use:
-       *
-       * Maximum speed:  8 threads
-       * Moderate speed: 6 threads
-       * General speed:  4 threads
-       */
-      int pooled_thread_count = Runtime.getRuntime().availableProcessors();
-      if (args.length > 0) {
-        try {
-          pooled_thread_count = Integer.parseInt(args[0]);
-        } catch (NumberFormatException e) {
-          System.err.println(
-              "Invalid argument '" + args[0] + "': expected thread count as an integer");
-          return;
-        }
-      }
-
-      THREAD_POOL = Executors.newScheduledThreadPool(pooled_thread_count);
-
       System.setErr(System.out);
 
       File config = new File(System.getProperty("user.dir"), "BINSniper.config");
@@ -137,6 +111,8 @@ public class Main {
               + config.getAbsolutePath() + "'");
         }
       }
+
+      THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
 
       Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
 
