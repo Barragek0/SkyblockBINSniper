@@ -73,62 +73,64 @@ public class BINSniper {
               if (workingPage
                   < totalPages.get()) { // Ensure that this is still a valid page we need to look at.
                 LazyArray auctionArray = getAuctions(workingPage);
-
-                for (int i = 0; i < auctionArray.length(); i++) {
-                  LazyObject binData = auctionArray.getJSONObject(i);
-                  if (!SBHelper.isExistingBIN(binData)) {
-                    continue;
-                  }
-
-                  if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) {
-                    continue;
-                  }
-                  if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) {
-                    continue;
-                  }
-
-                  String itemId;
-                  StringBuilder itemName = new StringBuilder(
-                      SBHelper.stripInvalidChars(binData.getString("item_name")).replace("✪", ""));
-
-                  try {
-                    NBTCompound itemData = NBTReader.readBase64(binData.getString("item_bytes"))
-                        .getList("i")
-                        .stream().findFirst()
-                        .map(o -> o instanceof NBTCompound ? (NBTCompound) o : null)
-                        .orElseThrow(() -> new RuntimeException("Failed to parse NBT data."))
-                        .getCompound("tag");
-
-                    NBTCompound skyblockAttributes = itemData.getCompound("ExtraAttributes");
-
-                    String reforge = skyblockAttributes.getString("modifier");
-                    String id = skyblockAttributes.getString("id");
-                    boolean recombed = skyblockAttributes.getInt("rarity_upgrades", 0) > 0;
-                    int hotPotatoBooks = skyblockAttributes.getInt("hot_potato_count", 0);
-                    int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
-
-                    itemId = id + "|" + recombed
-                        + (Config.IGNORE_REFORGES ? "" : "|" + reforge)
-                        + (Config.IGNORE_HOT_POTATO ? "" : "|" + hotPotatoBooks)
-                        + (Config.IGNORE_STARS ? "" : "|" + stars);
-
-                    for (int star = 0; star < stars; star++) {
-                      itemName.append("*");
+                if (auctionArray != null) {
+                  for (int i = 0; i < auctionArray.length(); i++) {
+                    LazyObject binData = auctionArray.getJSONObject(i);
+                    if (!SBHelper.isExistingBIN(binData)) {
+                      continue;
                     }
 
-                    itemName.append(" [").append(binData.getString("tier"))
-                        .append(recombed ? ", RECOMB" : "").append("]");
-                  } catch (Exception e) {
-                    e.printStackTrace();
-                    continue;
+                    if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) {
+                      continue;
+                    }
+                    if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) {
+                      continue;
+                    }
+
+                    String itemId;
+                    StringBuilder itemName = new StringBuilder(
+                        SBHelper.stripInvalidChars(binData.getString("item_name"))
+                            .replace("✪", ""));
+
+                    try {
+                      NBTCompound itemData = NBTReader.readBase64(binData.getString("item_bytes"))
+                          .getList("i")
+                          .stream().findFirst()
+                          .map(o -> o instanceof NBTCompound ? (NBTCompound) o : null)
+                          .orElseThrow(() -> new RuntimeException("Failed to parse NBT data."))
+                          .getCompound("tag");
+
+                      NBTCompound skyblockAttributes = itemData.getCompound("ExtraAttributes");
+
+                      String reforge = skyblockAttributes.getString("modifier");
+                      String id = skyblockAttributes.getString("id");
+                      boolean recombed = skyblockAttributes.getInt("rarity_upgrades", 0) > 0;
+                      int hotPotatoBooks = skyblockAttributes.getInt("hot_potato_count", 0);
+                      int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
+
+                      itemId = id + "|" + recombed
+                          + (Config.IGNORE_REFORGES ? "" : "|" + reforge)
+                          + (Config.IGNORE_HOT_POTATO ? "" : "|" + hotPotatoBooks)
+                          + (Config.IGNORE_STARS ? "" : "|" + stars);
+
+                      for (int star = 0; star < stars; star++) {
+                        itemName.append("*");
+                      }
+
+                      itemName.append(" [").append(binData.getString("tier"))
+                          .append(recombed ? ", RECOMB" : "").append("]");
+                    } catch (Exception e) {
+                      e.printStackTrace();
+                      continue;
+                    }
+
+                    String uuid = binData.getString("uuid");
+                    int price = binData.getInt("starting_bid");
+
+                    binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
+                        .tryUpdatePrice(itemName.toString(), uuid, price);
+                    totalBins.incrementAndGet();
                   }
-
-                  String uuid = binData.getString("uuid");
-                  int price = binData.getInt("starting_bid");
-
-                  binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
-                      .tryUpdatePrice(itemName.toString(), uuid, price);
-                  totalBins.incrementAndGet();
                 }
               }
 
@@ -254,6 +256,10 @@ public class BINSniper {
       }
 
       connection.connect();
+
+      if (connection.getResponseCode() != 200) {
+        return null; // As per https://api.hypixel.net/#tag/SkyBlock/paths/~1skyblock~1auctions/get, all responses other than 200 indicate failure.
+      }
 
       BufferedReader responseStreamReader;
       if (connection.getContentEncoding().equalsIgnoreCase("gzip")) {

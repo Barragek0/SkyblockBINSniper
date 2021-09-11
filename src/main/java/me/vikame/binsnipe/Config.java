@@ -2,7 +2,7 @@ package me.vikame.binsnipe;
 
 public class Config {
 
-  // The number of threads to use for JSON & auction data parsing when finding flips.
+  // The number of threads to use for making API requests, and parsing auction data, when finding flips.
   public static int POOLED_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
 
   // Whether to play a "beep" sound when a flip has been found.
