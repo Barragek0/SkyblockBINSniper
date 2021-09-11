@@ -24,10 +24,16 @@ public class Config {
   public static final boolean IGNORE_COSMETICS = true;
 
   // Whether to treat all "dungeonizable" items as if they were starless.
-  public static final boolean STRIP_STARS = false;
+  public static final boolean IGNORE_STARS = false;
+
+  // Whether to treat all reforgeable items the same regardless of applied reforge.
+  public static final boolean IGNORE_REFORGES = true;
+
+  // Whether to ignore whether an item has hot potato books applied.
+  public static final boolean IGNORE_HOT_POTATO = true;
 
   // The minimum number of the same item that must be on the market to be considered for a flip.
-  public static final int MIN_ITEMS_ON_MARKET = 2;
+  public static final int MIN_ITEMS_ON_MARKET = 3;
 
   // The maximum price you are willing to pay for an item to flip.
   public static final int MAX_BIN_PRICE = Integer.MAX_VALUE;

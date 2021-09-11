@@ -61,6 +61,8 @@ public class Main {
 
       THREAD_POOL = Executors.newScheduledThreadPool(pooled_thread_count);
 
+      System.setErr(System.out);
+
       Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
 
       new BINSniper();

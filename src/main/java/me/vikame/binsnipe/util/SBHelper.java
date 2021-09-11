@@ -22,14 +22,10 @@ public class SBHelper {
         && object.getLong("end") > System.currentTimeMillis();
   }
 
-  /* For the following methods, we opt to do string manipulation to
-   * determine different aspects of the item rather than handling the
-   * gzipped NBT data within the 'item_bytes' field of the JSON response.
-   *
-   * While the gzipped NBT data would contain far more accurate information,
-   * speed is the name-of-the-game for a BIN sniper, so taking the time
-   * to un-gzip and parse the NBT data is not a worthwhile endeavor.
-   */
+  public static String stripInvalidChars(String itemName) {
+    return itemName.replaceAll("\\p{C}}", "");
+  }
+
   public static String stripItemName(LazyObject object) {
     return stripItemName(object.getString("item_name"));
   }
@@ -43,7 +39,7 @@ public class SBHelper {
       ret = ret.replace(text, "");
     }
 
-    if (Config.STRIP_STARS) {
+    if (Config.IGNORE_STARS) {
       ret = ret.replace(" ✪", "").replace("✪", "");
     } else {
       ret = ret.replace("✪", "*");

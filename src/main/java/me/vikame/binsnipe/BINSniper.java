@@ -17,6 +17,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyObject;
+import me.nullicorn.nedit.NBTReader;
+import me.nullicorn.nedit.type.NBTCompound;
 import me.vikame.binsnipe.util.AtomicPrice;
 import me.vikame.binsnipe.util.ExpiringSet;
 import me.vikame.binsnipe.util.SBHelper;
@@ -78,8 +80,6 @@ public class BINSniper {
                     continue;
                   }
 
-                  String name = SBHelper.stripItemName(binData);
-
                   if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) {
                     continue;
                   }
@@ -87,15 +87,47 @@ public class BINSniper {
                     continue;
                   }
 
-                  name +=
-                      " [" + binData.getString("tier") + (SBHelper.isRecombed(binData) ? ", RECOMB"
-                          : "") + "]";
+                  String itemId;
+                  StringBuilder itemName = new StringBuilder(
+                      SBHelper.stripInvalidChars(binData.getString("item_name")).replace("✪", ""));
+
+                  try {
+                    NBTCompound itemData = NBTReader.readBase64(binData.getString("item_bytes"))
+                        .getList("i")
+                        .stream().findFirst()
+                        .map(o -> o instanceof NBTCompound ? (NBTCompound) o : null)
+                        .orElseThrow(() -> new RuntimeException("Failed to parse NBT data."))
+                        .getCompound("tag");
+
+                    NBTCompound skyblockAttributes = itemData.getCompound("ExtraAttributes");
+
+                    String reforge = skyblockAttributes.getString("modifier");
+                    String id = skyblockAttributes.getString("id");
+                    boolean recombed = skyblockAttributes.getInt("rarity_upgrades", 0) > 0;
+                    int hotPotatoBooks = skyblockAttributes.getInt("hot_potato_count", 0);
+                    int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
+
+                    itemId = id + "|" + recombed
+                        + (Config.IGNORE_REFORGES ? "" : "|" + reforge)
+                        + (Config.IGNORE_HOT_POTATO ? "" : "|" + hotPotatoBooks)
+                        + (Config.IGNORE_STARS ? "" : "|" + stars);
+
+                    for (int star = 0; star < stars; star++) {
+                      itemName.append("*");
+                    }
+
+                    itemName.append(" [").append(binData.getString("tier"))
+                        .append(recombed ? ", RECOMB" : "").append("]");
+                  } catch (Exception e) {
+                    e.printStackTrace();
+                    continue;
+                  }
 
                   String uuid = binData.getString("uuid");
                   int price = binData.getInt("starting_bid");
 
-                  binPrices.computeIfAbsent(name, ign -> new AtomicPrice())
-                      .tryUpdatePrice(uuid, price);
+                  binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
+                      .tryUpdatePrice(itemName.toString(), uuid, price);
                   totalBins.incrementAndGet();
                 }
               }
@@ -136,7 +168,8 @@ public class BINSniper {
             int lowest = price.getLowestValue();
             int second = price.getSecondLowestValue();
 
-            if (price.getTotalCount() > Config.MIN_ITEMS_ON_MARKET && second >= Config.MIN_BIN_PRICE
+            if (price.getTotalCount() >= Config.MIN_ITEMS_ON_MARKET
+                && second >= Config.MIN_BIN_PRICE
                 && lowest <= Config.MAX_BIN_PRICE) {
               int secondWithTaxes = SBHelper.calculateWithTaxes(second);
 
@@ -165,7 +198,7 @@ public class BINSniper {
             int diff = secondWithTaxes - lowest;
             float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
-            System.out.println(price.getLowestKey() + " | Item: " + highestProfit.getKey()
+            System.out.println(price.getLowestKey() + " | Item: " + price.getLowestItemName()
                 + " | # BIN'd on AH: " + price.getTotalCount()
                 + " | Price: " + NumberFormat.getInstance().format(lowest)
                 + " | Second lowest: " + NumberFormat.getInstance().format(second)
