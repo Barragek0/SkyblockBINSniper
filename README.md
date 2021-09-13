@@ -19,9 +19,7 @@ Visit https://github.com/Vikame/SkyblockBINSniper/releases and download the late
 ### Step 2
 Double-click the JAR to run the program. It will open a command prompt with the sniper output.
 
-You may also run the JAR file via the command line using ``java -jar <PATH_TO_JAR> [thread_count]``
-to control the number of threads used by the program, which by default is the number of processors
-that the JVM has available.
+You may also run the JAR file via the command line using ``java -jar <PATH_TO_JAR>``
 
 ### Step 3
 
