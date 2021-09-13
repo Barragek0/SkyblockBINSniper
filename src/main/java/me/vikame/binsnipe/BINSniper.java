@@ -165,6 +165,7 @@ public class BINSniper {
             });
           }
 
+          long timeout = System.currentTimeMillis() + Config.TIMEOUT;
           int lastCompleted = 0;
 
           int completed;
@@ -174,6 +175,14 @@ public class BINSniper {
 
               float progress = (float) completed / (float) maxPages;
               printLoadingBar(progress);
+
+              timeout = System.currentTimeMillis() + Config.TIMEOUT;
+            }
+
+            if (timeout >= System.currentTimeMillis()) {
+              System.out.println("Flips timed out at " + (completedPages.get() + "/" + maxPages)
+                  + " pages processed.");
+              return;
             }
 
             try {

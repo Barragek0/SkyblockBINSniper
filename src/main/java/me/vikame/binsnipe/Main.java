@@ -38,6 +38,17 @@ public class Main {
         allArgs.append(str).append(' ');
       }
 
+      // I feel the need to leave a comment here explaining this as it *may* look suspicious at a glance.
+
+      /*
+       * The above lines of code, alongside this one, start a new instance of the windows command prompt and execute the command below.
+       * When the command below is put together, it is 'cmd /c start cmd /k java -jar Dfile.encoding=UTF-8 "${filename}" ${allArgs}'
+       * which, when ran, simply runs the .JAR file that was executed (the BIN sniper!) and nothing else.
+       *
+       * This is done to ensure we have a console window to print output to, and so you can easily stop the program (via the exit button on the console)
+       * and is in no way a suspicious piece of code. If you *still* do not trust this, you can simply run the JAR file via the command-line yourself
+       * (via 'java -jar <jarFile>') which will not trigger this block of code.
+       */
       Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
           "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
     } else {
