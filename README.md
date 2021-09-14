@@ -14,10 +14,12 @@ Heavily inspired by 'csjh' and their SkyblockSniper python script (https://githu
 ## Usage
 
 ### Step 1
-Visit https://github.com/Vikame/SkyblockBINSniper/releases and download the latest .jar file
+Visit https://github.com/Vikame/SkyblockBINSniper/releases and download the latest .jar file.
 
 ### Step 2
 Double-click the JAR to run the program. It will open a command prompt with the sniper output.
+The first execution of the JAR will create a configuration file within the folder the JAR is
+present in.
 
 You may also run the JAR file via the command line using ``java -jar <PATH_TO_JAR>``
 
