@@ -249,7 +249,8 @@ public class BINSniper {
               int diff = secondWithTaxes - lowest;
               float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
-              System.out.println(price.getLowestKey() + " | Item: " + price.getLowestItemName()
+              System.out.println("/viewauction " + price.getLowestKey()
+                  + " | Item: " + price.getLowestItemName()
                   + " | # BIN'd on AH: " + price.getTotalCount()
                   + " | Price: " + NumberFormat.getInstance().format(lowest)
                   + " | Second lowest: " + NumberFormat.getInstance().format(second)
