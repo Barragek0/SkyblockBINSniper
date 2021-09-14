@@ -9,7 +9,9 @@ import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -195,8 +197,8 @@ public class BINSniper {
 
           clearLoadingBar();
 
-          Map.Entry<String, AtomicPrice> highestProfit = null;
-          int maxDiff = -1;
+          TreeSet<Map.Entry<String, AtomicPrice>> flips = new TreeSet<>(
+              Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
 
           for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
             if (flipsAlreadyShown.contains(entry.getKey())) {
@@ -219,43 +221,55 @@ public class BINSniper {
                   || diff >= Config.MIN_PROFIT_AMOUNT) {
                 Main.printDebug("Found flippable item '" + entry.getKey() + "' (" + entry.getValue()
                     .getLowestItemName() + ")");
-                if (diff > maxDiff) {
-                  maxDiff = diff;
-                  highestProfit = entry;
+                if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
+                  flips.add(entry);
+                } else {
+                  Map.Entry<String, AtomicPrice> first = flips.first();
+                  AtomicPrice firstPrice = first.getValue();
+
+                  if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
+                    flips.pollFirst();
+                    flips.add(entry);
+                  }
                 }
               }
             }
           }
 
-          if (highestProfit != null) {
-            AtomicPrice price = highestProfit.getValue();
-            flipsAlreadyShown.add(highestProfit.getKey());
-
-            int lowest = price.getLowestValue();
-            int second = price.getSecondLowestValue();
-
-            int secondWithTaxes = SBHelper.calculateWithTaxes(second);
-
-            int diff = secondWithTaxes - lowest;
-            float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
-
+          if (!flips.isEmpty()) {
             long timeTaken = System.currentTimeMillis() - start;
 
-            System.out.println(price.getLowestKey() + " | Item: " + price.getLowestItemName()
-                + " | # BIN'd on AH: " + price.getTotalCount()
-                + " | Price: " + NumberFormat.getInstance().format(lowest)
-                + " | Second lowest: " + NumberFormat.getInstance().format(second)
-                + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
-                + profitPercentage + "%) (" + timeTaken + "ms)");
+            for (Map.Entry<String, AtomicPrice> entry : flips) {
+              flipsAlreadyShown.add(entry.getKey());
+
+              AtomicPrice price = entry.getValue();
+
+              int lowest = price.getLowestValue();
+              int second = price.getSecondLowestValue();
+
+              int secondWithTaxes = SBHelper.calculateWithTaxes(second);
+
+              int diff = secondWithTaxes - lowest;
+              float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
+
+              System.out.println(price.getLowestKey() + " | Item: " + price.getLowestItemName()
+                  + " | # BIN'd on AH: " + price.getTotalCount()
+                  + " | Price: " + NumberFormat.getInstance().format(lowest)
+                  + " | Second lowest: " + NumberFormat.getInstance().format(second)
+                  + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
+                  + profitPercentage + "%) (" + timeTaken + "ms)");
+            }
+
+            Toolkit.getDefaultToolkit().getSystemClipboard()
+                .setContents(
+                    new StringSelection("/viewauction " + flips.last().getValue().getLowestKey()),
+                    null);
 
             Main.printDebug("Flip timing information:");
             Main.printDebug(" > " + timeTaken + "ms for page processing");
             Main.printDebug(" > " + actualDelay + "ms for page update");
             Main.printDebug(
                 " > In total, " + (System.currentTimeMillis() - newUpdateTime) + "ms late");
-
-            Toolkit.getDefaultToolkit().getSystemClipboard()
-                .setContents(new StringSelection("/viewauction " + price.getLowestKey()), null);
 
             if (Config.BEEP_WHEN_FLIP_FOUND) {
               Toolkit.getDefaultToolkit().beep();

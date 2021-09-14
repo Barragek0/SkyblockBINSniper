@@ -50,6 +50,9 @@ public class Config {
   // Whether to treat recombobulated as their base rarity.
   public static boolean IGNORE_RECOMB = false;
 
+  // The maximum number of flips to print in the console. Do note that only the highest value flip will be copied to your clipboard.
+  public static int MAX_FLIPS_TO_SHOW = 5;
+
   // The minimum number of the same item that must be on the market to be considered for a flip.
   public static int MIN_ITEMS_ON_MARKET = 3;
 

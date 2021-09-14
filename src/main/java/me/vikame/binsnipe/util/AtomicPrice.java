@@ -56,4 +56,8 @@ public class AtomicPrice {
     return secondLowestValue.get();
   }
 
+  public int getProjectedProfit() {
+    return secondLowestValue.get() - lowestValue.get();
+  }
+
 }
