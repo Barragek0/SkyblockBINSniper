@@ -48,6 +48,8 @@ public class Main {
        * This is done to ensure we have a console window to print output to, and so you can easily stop the program (via the exit button on the console)
        * and is in no way a suspicious piece of code. If you *still* do not trust this, you can simply run the JAR file via the command-line yourself
        * (via 'java -jar <jarFile>') which will not trigger this block of code.
+       *
+       * To add to this, this code is directly taken (and slightly modified) from https://stackoverflow.com/a/29138847
        */
       Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
           "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
