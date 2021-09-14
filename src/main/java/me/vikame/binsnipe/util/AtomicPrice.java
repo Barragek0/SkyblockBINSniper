@@ -11,7 +11,7 @@ public class AtomicPrice {
    * I don't love how I've implemented this class, or more specifically the Atomic field spam.
    *
    * It's clearly the simplest option for a thread-safe, non-blocking object for the held
-   * information, but I believe there is room plenty of room for improvement.
+   * information, but I believe there is plenty of room for improvement.
    */
 
   private final AtomicReference<String> lowestItemName;
