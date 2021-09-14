@@ -179,7 +179,7 @@ public class BINSniper {
               timeout = System.currentTimeMillis() + Config.TIMEOUT;
             }
 
-            if (timeout >= System.currentTimeMillis()) {
+            if (timeout - System.currentTimeMillis() >= 0) {
               System.out.println("Flips timed out at " + (completedPages.get() + "/" + maxPages)
                   + " pages processed.");
               return;
