@@ -36,7 +36,7 @@ public class Config {
   public static boolean IGNORE_USED_CAKE_SOULS = true;
 
   // Whether to treat all "dungeonizable" items as if they were starless.
-  public static boolean IGNORE_STARS = false;
+  public static boolean IGNORE_STARS = true;
 
   // Whether to treat all reforgeable items the same regardless of applied reforge.
   public static boolean IGNORE_REFORGES = true;
