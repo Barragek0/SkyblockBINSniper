@@ -8,8 +8,8 @@ public class Config {
   // The maximum time, in milliseconds, that is allowed to pass before we determine a snipe attempt to be dead.
   public static long TIMEOUT = 10000;
 
-  // Whether to play a "beep" sound when a flip has been found.
-  public static boolean BEEP_WHEN_FLIP_FOUND = true;
+  // Whether to play a sound when a flip has been found.
+  public static boolean SOUND_WHEN_FLIP_FOUND = true;
 
   /* Whether to add the "Accept-Encoding: gzip" header to API requests.
    * I would highly recommend against disabling this as it greatly reduces bandwith usage when enabled.

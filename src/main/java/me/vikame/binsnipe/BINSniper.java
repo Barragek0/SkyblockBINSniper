@@ -269,7 +269,7 @@ public class BINSniper {
             Main.printDebug(
                 " > In total, " + (System.currentTimeMillis() - newUpdateTime) + "ms late");
 
-            if (Config.BEEP_WHEN_FLIP_FOUND) {
+            if (Config.SOUND_WHEN_FLIP_FOUND) {
               Toolkit.getDefaultToolkit().beep();
             }
           } else {

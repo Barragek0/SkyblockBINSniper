@@ -7,6 +7,13 @@ import me.doubledutch.lazyjson.LazyObject;
 
 public class AtomicPrice {
 
+  /*
+   * I don't love how I've implemented this class, or more specifically the Atomic field spam.
+   *
+   * It's clearly the simplest option for a thread-safe, non-blocking object for the held
+   * information, but I believe there is room plenty of room for improvement.
+   */
+
   private final AtomicReference<String> lowestItemName;
   private final AtomicReference<String> lowestKey;
   private final AtomicInteger lowestValue;
