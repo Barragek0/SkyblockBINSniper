@@ -58,6 +58,7 @@ public class BINSniper {
       if ((System.currentTimeMillis() - lastUpdateTime) > 60000) {
         getAuctions(0);
         long newUpdateTime = timeLastUpdated.get();
+        long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
         if (lastUpdateTime != newUpdateTime) {
           totalBins.set(0);
@@ -238,12 +239,20 @@ public class BINSniper {
             int diff = secondWithTaxes - lowest;
             float profitPercentage = (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
+            long timeTaken = System.currentTimeMillis() - start;
+
             System.out.println(price.getLowestKey() + " | Item: " + price.getLowestItemName()
                 + " | # BIN'd on AH: " + price.getTotalCount()
                 + " | Price: " + NumberFormat.getInstance().format(lowest)
                 + " | Second lowest: " + NumberFormat.getInstance().format(second)
                 + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
-                + profitPercentage + "%) (" + (System.currentTimeMillis() - start) + "ms)");
+                + profitPercentage + "%) (" + timeTaken + "ms)");
+
+            Main.printDebug("Flip timing information:");
+            Main.printDebug(" > " + timeTaken + "ms for page processing");
+            Main.printDebug(" > " + actualDelay + "ms for page update");
+            Main.printDebug(
+                " > In total, " + (System.currentTimeMillis() - newUpdateTime) + "ms late");
 
             Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(new StringSelection("/viewauction " + price.getLowestKey()), null);
