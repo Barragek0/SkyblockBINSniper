@@ -50,6 +50,9 @@ public class Config {
   // Whether to treat recombobulated as their base rarity.
   public static boolean IGNORE_RECOMB = false;
 
+  // The maximum amount of time, in milliseconds, that an item must be on the auction house for to be determined "old" and thus ignored.
+  public static long OLD_THRESHOLD = 180_000;
+
   // The maximum number of flips to print in the console. Do note that only the highest value flip will be copied to your clipboard.
   public static int MAX_FLIPS_TO_SHOW = 5;
 

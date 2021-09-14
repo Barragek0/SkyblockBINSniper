@@ -154,11 +154,8 @@ public class BINSniper {
                         .replace(" ✦", "")
                         .replace("⚚", "Fragged");
 
-                    String uuid = binData.getString("uuid");
-                    int price = binData.getInt("starting_bid");
-
                     binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
-                        .tryUpdatePrice(filteredName, uuid, price);
+                        .tryUpdatePrice(filteredName, binData);
                     totalBins.incrementAndGet();
                   }
                 }
@@ -211,7 +208,8 @@ public class BINSniper {
 
             if (price.getTotalCount() >= Config.MIN_ITEMS_ON_MARKET
                 && second >= Config.MIN_BIN_PRICE
-                && lowest <= Config.MAX_BIN_PRICE) {
+                && lowest <= Config.MAX_BIN_PRICE
+                && price.getLowestElapsedTime() <= Config.OLD_THRESHOLD) {
               int secondWithTaxes = SBHelper.calculateWithTaxes(second);
 
               int diff = secondWithTaxes - lowest;
@@ -236,9 +234,8 @@ public class BINSniper {
             }
           }
 
+          long timeTaken = System.currentTimeMillis() - start;
           if (!flips.isEmpty()) {
-            long timeTaken = System.currentTimeMillis() - start;
-
             for (Map.Entry<String, AtomicPrice> entry : flips) {
               flipsAlreadyShown.add(entry.getKey());
 
@@ -275,8 +272,7 @@ public class BINSniper {
               Toolkit.getDefaultToolkit().beep();
             }
           } else {
-            System.out.println("Unable to find a flip after " + (System.currentTimeMillis()
-                - timeLastUpdated.get()) + " ms.");
+            System.out.println("Unable to find a flip after " + timeTaken + " ms.");
           }
 
           System.out.println();

@@ -1,13 +1,16 @@
 package me.vikame.binsnipe.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+import me.doubledutch.lazyjson.LazyObject;
 
 public class AtomicPrice {
 
   private final AtomicReference<String> lowestItemName;
   private final AtomicReference<String> lowestKey;
   private final AtomicInteger lowestValue;
+  private final AtomicLong lowestElapsedTime;
   private final AtomicInteger secondLowestValue;
   private final AtomicInteger totalCount;
 
@@ -15,11 +18,16 @@ public class AtomicPrice {
     this.lowestItemName = new AtomicReference<>();
     this.lowestKey = new AtomicReference<>();
     this.lowestValue = new AtomicInteger(-1);
+    this.lowestElapsedTime = new AtomicLong(-1);
     this.secondLowestValue = new AtomicInteger(-1);
     this.totalCount = new AtomicInteger(0);
   }
 
-  public void tryUpdatePrice(String itemName, String id, int newPrice) {
+  public void tryUpdatePrice(String itemName, LazyObject binData) {
+    long elapsed = System.currentTimeMillis() - binData.getLong("start");
+    String id = binData.getString("uuid");
+    int newPrice = binData.getInt("starting_bid");
+
     int lowest = lowestValue.get();
     int secondLowest = secondLowestValue.get();
 
@@ -27,6 +35,7 @@ public class AtomicPrice {
       secondLowestValue.set(lowest);
 
       lowestItemName.set(itemName);
+      lowestElapsedTime.set(elapsed);
       lowestKey.set(id);
       lowestValue.set(newPrice);
     } else if (secondLowest == -1 || newPrice < secondLowest) {
@@ -54,6 +63,10 @@ public class AtomicPrice {
 
   public int getSecondLowestValue() {
     return secondLowestValue.get();
+  }
+
+  public long getLowestElapsedTime() {
+    return lowestElapsedTime.get();
   }
 
   public int getProjectedProfit() {
