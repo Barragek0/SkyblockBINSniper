@@ -89,7 +89,7 @@ public class Main {
               System.out.println(" > " + field.getName() + ": " + prop);
             } catch (IllegalAccessException e) {
               e.printStackTrace();
-              System.out.println("Failed to get default config value for '" + field + "'");
+              System.out.println("Failed to set '" + field + "' to config value.");
             }
           }
         } catch (IOException e) {
