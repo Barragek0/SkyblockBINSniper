@@ -38,8 +38,6 @@ public class Main {
         allArgs.append(str).append(' ');
       }
 
-      // I feel the need to leave a comment here explaining this as it *may* look suspicious at a glance.
-
       /*
        * The above lines of code, alongside this one, start a new instance of the windows command prompt and execute the command below.
        * When the command below is put together, it is 'cmd /c start cmd /k java -jar Dfile.encoding=UTF-8 "${filename}" ${allArgs}'
@@ -52,7 +50,8 @@ public class Main {
        * To add to this, this code is directly taken (and slightly modified) from https://stackoverflow.com/a/29138847
        */
       Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
-          "java -jar -Dfile.encoding=UTF-8 \"" + filename + "\" " + allArgs.toString().trim()});
+          "java -jar -Dfile.encoding=UTF-8 -Xmx1024M \"" + filename + "\" " + allArgs.toString()
+              .trim()});
     } else {
       System.setErr(System.out);
 
@@ -92,6 +91,8 @@ public class Main {
               System.out.println("Failed to set '" + field + "' to config value.");
             }
           }
+
+          reader.close();
         } catch (IOException e) {
           e.printStackTrace();
           System.out.println("Failed to read configuration data. Using defaults...");
@@ -156,8 +157,8 @@ public class Main {
     }
   }
 
-  public static void exec(Runnable runnable) {
-    THREAD_POOL.submit(runnable);
+  public static Future<?> exec(Runnable runnable) {
+    return THREAD_POOL.submit(runnable);
   }
 
   public static <T> Future<T> exec(Callable<T> callable) {

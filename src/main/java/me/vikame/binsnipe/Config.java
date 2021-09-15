@@ -69,6 +69,14 @@ public class Config {
   public static float MIN_PROFIT_PERCENTAGE = 110.0f;
   public static int MIN_PROFIT_AMOUNT = 1_000_000;
 
+  /* Whether to explicitly ask the JVM to dispose of unused objects in memory. This should only be enabled if your machine is struggling with memory.
+   *
+   * I am well aware of the bad practice surrounding explicit GC calls, but in this situation an explicit GC can actually be quite beneficial as
+   * it happens at the very end of any BIN snipe attempt, when no further calls are needed for an extended period, and many dead objects are being
+   * held in memory.
+   */
+  public static boolean EXPLICIT_GC_AFTER_FLIP = false;
+
   // The number of segments to a console-based loading bar used when displaying current BIN snipe progress.
   public static transient int LOADING_BAR_SEGMENTS = 40;
 

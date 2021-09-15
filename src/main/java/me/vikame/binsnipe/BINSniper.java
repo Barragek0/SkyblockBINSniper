@@ -10,10 +10,15 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.util.Comparator;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
@@ -47,7 +52,7 @@ public class BINSniper {
     binPrices = new ConcurrentHashMap<>();
 
     flipsAlreadyShown = new ExpiringSet<>(
-        60000 * 30);
+        60000 * 5);
 
     totalAuctions = new AtomicInteger();
     totalBins = new AtomicInteger();
@@ -63,16 +68,13 @@ public class BINSniper {
         long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
         if (lastUpdateTime != newUpdateTime) {
-          totalBins.set(0);
-          binPrices.clear();
-
-          AtomicInteger completedPages = new AtomicInteger(0);
           final int maxPages = totalPages.get();
+          List<Future<?>> futures = new LinkedList<>();
 
           long start = System.currentTimeMillis();
           for (int page = 0; page < maxPages; page++) {
             final int workingPage = page;
-            Main.exec(() -> {
+            Future<?> future = Main.exec(() -> {
               if (workingPage
                   < totalPages.get()) { // Ensure that this is still a valid page we need to look at.
                 LazyArray auctionArray = getAuctions(workingPage);
@@ -160,35 +162,25 @@ public class BINSniper {
                   }
                 }
               }
-
-              completedPages.incrementAndGet();
             });
+
+            futures.add(future);
           }
 
-          long timeout = System.currentTimeMillis() + Config.TIMEOUT;
-          int lastCompleted = 0;
+          printLoadingBar(0.0f);
 
-          int completed;
-          while ((completed = completedPages.get()) < maxPages) {
-            if (lastCompleted != completed) {
-              lastCompleted = completed;
+          for (Future<?> future : futures) {
+            if (!future.isDone()) {
+              try {
+                future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                System.out.println("Flips took too long to process, and timed out.");
+                return;
+              }
 
-              float progress = (float) completed / (float) maxPages;
+              float progress =
+                  (float) futures.stream().filter(Future::isDone).count() / (float) maxPages;
               printLoadingBar(progress);
-
-              timeout = System.currentTimeMillis() + Config.TIMEOUT;
-            }
-
-            if (timeout - System.currentTimeMillis() <= 0) {
-              System.out.println("Flips timed out at " + (completedPages.get() + "/" + maxPages)
-                  + " pages processed.");
-              return;
-            }
-
-            try {
-              Thread.sleep(100);
-            } catch (InterruptedException e) {
-              e.printStackTrace();
             }
           }
 
@@ -276,7 +268,13 @@ public class BINSniper {
             System.out.println("Unable to find a flip after " + timeTaken + " ms.");
           }
 
+          binPrices.clear();
+          totalBins.set(0);
           System.out.println();
+
+          if (Config.EXPLICIT_GC_AFTER_FLIP) {
+            System.gc();
+          }
         }
       }
     }, 0, 1000, TimeUnit.MILLISECONDS);
@@ -316,6 +314,7 @@ public class BINSniper {
       connection.connect();
 
       if (connection.getResponseCode() != 200) {
+        connection.disconnect();
         return null; // As per https://api.hypixel.net/#tag/SkyBlock/paths/~1skyblock~1auctions/get, all responses other than 200 indicate failure.
       }
 
@@ -335,8 +334,8 @@ public class BINSniper {
         response.append((char) ch);
       }
 
-      connection.disconnect();
       responseStreamReader.close();
+      connection.disconnect();
 
       LazyObject responseJsonObject = new LazyObject(response.toString());
       if (!responseJsonObject.getBoolean("success")) {
