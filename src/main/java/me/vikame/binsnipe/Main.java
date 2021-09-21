@@ -8,15 +8,11 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Arrays;
-import java.util.Collection;
 import java.util.Properties;
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *
@@ -157,45 +153,12 @@ public class Main {
     }
   }
 
-  public static Future<?> exec(Runnable runnable) {
-    return THREAD_POOL.submit(runnable);
-  }
-
-  public static <T> Future<T> exec(Callable<T> callable) {
-    return THREAD_POOL.submit(callable);
-  }
-
-  public static void execLater(Runnable runnable, long delay, TimeUnit unit) {
-    THREAD_POOL.schedule(runnable, delay, unit);
+  public static CompletableFuture<Void> exec(Runnable runnable) {
+    return CompletableFuture.runAsync(runnable, THREAD_POOL);
   }
 
   public static void schedule(Runnable runnable, long initialDelay, long delay, TimeUnit unit) {
     THREAD_POOL.scheduleAtFixedRate(runnable, initialDelay, delay, unit);
-  }
-
-  public static <T> void execAll(Collection<Callable<T>> collection) {
-    for (Callable<T> callable : collection) {
-      THREAD_POOL.submit(callable);
-    }
-  }
-
-  public static <T> void execAll(Collection<T> collection, Consumer<T> consumer) {
-    for (final T t : collection) {
-      Callable<T> callable = () -> {
-        consumer.accept(t);
-        return t;
-      };
-
-      THREAD_POOL.submit(callable);
-    }
-  }
-
-  public static <T> void execAll(Callable<T>[] array) {
-    execAll(Arrays.asList(array));
-  }
-
-  public static <T> void execAll(T[] array, Consumer<T> consumer) {
-    execAll(Arrays.asList(array), consumer);
   }
 
 }

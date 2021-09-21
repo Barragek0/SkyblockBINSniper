@@ -14,9 +14,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -31,6 +31,9 @@ import me.vikame.binsnipe.util.ExpiringSet;
 import me.vikame.binsnipe.util.SBHelper;
 
 public class BINSniper {
+
+  // An object used for synchronization during loading bar printing.
+  private final Object lock = new Object();
 
   // Important information required by the BIN sniper.
   private final AtomicInteger totalPages;
@@ -68,13 +71,17 @@ public class BINSniper {
         long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
         if (lastUpdateTime != newUpdateTime) {
+          AtomicInteger completed = new AtomicInteger(0);
           final int maxPages = totalPages.get();
-          List<Future<?>> futures = new LinkedList<>();
+
+          printLoadingBar(0, maxPages);
+
+          List<CompletableFuture<Void>> futures = new LinkedList<>();
 
           long start = System.currentTimeMillis();
           for (int page = 0; page < maxPages; page++) {
             final int workingPage = page;
-            Future<?> future = Main.exec(() -> {
+            CompletableFuture<Void> future = Main.exec(() -> {
               if (workingPage
                   < totalPages.get()) { // Ensure that this is still a valid page we need to look at.
                 LazyArray auctionArray = getAuctions(workingPage);
@@ -164,12 +171,13 @@ public class BINSniper {
               }
             });
 
+            future.thenRun(() -> {
+              printLoadingBar(completed.incrementAndGet(), maxPages);
+            });
             futures.add(future);
           }
 
-          printLoadingBar(0.0f);
-
-          for (Future<?> future : futures) {
+          for (CompletableFuture<Void> future : futures) {
             if (!future.isDone()) {
               try {
                 future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
@@ -177,10 +185,6 @@ public class BINSniper {
                 System.out.println("Flips took too long to process, and timed out.");
                 return;
               }
-
-              float progress =
-                  (float) futures.stream().filter(Future::isDone).count() / (float) maxPages;
-              printLoadingBar(progress);
             }
           }
 
@@ -359,27 +363,34 @@ public class BINSniper {
     return null;
   }
 
-  public void printLoadingBar(float progress) {
-    int segments = (int) Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
-    System.out.print("\r[");
-    for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
-      if (i < segments - 1) {
-        System.out.print('=');
-      } else if (i == segments - 1) {
-        System.out.print('>');
-      } else {
-        System.out.print(' ');
+  public void printLoadingBar(int current, int max) {
+    synchronized (lock) {
+      float progress = (float) current / (float) max;
+
+      int segments = (int) Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
+      System.out.print("\r[");
+      for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
+        if (i < segments - 1) {
+          System.out.print('=');
+        } else if (i == segments - 1) {
+          System.out.print('>');
+        } else {
+          System.out.print(' ');
+        }
       }
+      System.out.print(
+          "] " + (int) (Math.ceil(progress * 100.0F)) + "% (" + current + "/" + max + ")");
     }
-    System.out.print("] " + (int) (Math.ceil(progress * 100.0F)) + "%");
   }
 
   public void clearLoadingBar() {
-    System.out.print("\r ");
-    for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
-      System.out.print(' ');
+    synchronized (lock) {
+      System.out.print("\r ");
+      for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
+        System.out.print(' ');
+      }
+      System.out.print("                 \r");
     }
-    System.out.print("      \r");
   }
 
 }
