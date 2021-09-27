@@ -76,6 +76,8 @@ public class Main {
                 field.setInt(null, Integer.parseInt(prop));
               } else if (type == float.class || type == Float.class) {
                 field.set(null, Float.parseFloat(prop));
+              } else if (type == long.class || type == Long.class) {
+                field.set(null, Long.parseLong(prop));
               } else {
                 System.out.println("Could not parse data type for " + field.getName() + ".");
                 continue;
