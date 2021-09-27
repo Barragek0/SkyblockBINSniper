@@ -85,7 +85,8 @@ public class Config {
    *
    * I am well aware of the bad practice surrounding explicit GC calls, but in this situation an explicit GC can actually be quite beneficial as
    * it happens at the very end of any BIN snipe attempt, when no further calls are needed for an extended period, and many dead objects are being
-   * held in memory.
+   * held in memory. Do note that this setting will effectively be nullified by the CACHE_ATOMIC_OBJECTS setting, as it will retain AtomicPrice
+   * objects thus creating no immediate need for garbage collection.
    */
   public static boolean EXPLICIT_GC_AFTER_FLIP = false;
 
