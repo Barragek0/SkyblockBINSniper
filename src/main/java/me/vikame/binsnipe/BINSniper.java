@@ -182,6 +182,7 @@ public class BINSniper {
               try {
                 future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
               } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                clearLoadingBar();
                 System.out.println("Flips took too long to process, and timed out.");
                 return;
               }
@@ -315,7 +316,16 @@ public class BINSniper {
         connection.setUseCaches(false);
       }
 
-      connection.connect();
+      try {
+        connection.connect();
+      } catch (IOException e) {
+        e.printStackTrace();
+        System.err.println("Failed to connect to " + targetURL + ": " + e.getMessage());
+        System.err.println("This may be due to your firewall, or anti-virus software.");
+        System.err.println(
+            "Please ensure that the Java Virtual Machine is able to access the internet.");
+        return null;
+      }
 
       if (connection.getResponseCode() != 200) {
         connection.disconnect();
@@ -367,29 +377,37 @@ public class BINSniper {
     synchronized (lock) {
       float progress = (float) current / (float) max;
 
+      StringBuilder output = new StringBuilder("\r[");
+
       int segments = (int) Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
-      System.out.print("\r[");
       for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
         if (i < segments - 1) {
-          System.out.print('=');
+          output.append('=');
         } else if (i == segments - 1) {
-          System.out.print('>');
+          output.append('>');
         } else {
-          System.out.print(' ');
+          output.append(' ');
         }
       }
-      System.out.print(
-          "] " + (int) (Math.ceil(progress * 100.0F)) + "% (" + current + "/" + max + ")");
+
+      output.append("] ")
+          .append((int) (Math.ceil(progress * 100.0F)))
+          .append("% (").append(current)
+          .append("/").append(max).append(")");
+
+      System.out.print(output);
     }
   }
 
   public void clearLoadingBar() {
     synchronized (lock) {
-      System.out.print("\r ");
+      StringBuilder output = new StringBuilder("\r ");
       for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
-        System.out.print(' ');
+        output.append(' ');
       }
-      System.out.print("                 \r");
+      output.append("                 \r");
+
+      System.out.print(output);
     }
   }
 

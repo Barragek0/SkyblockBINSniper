@@ -36,7 +36,7 @@ public class Main {
 
       /*
        * The above lines of code, alongside this one, start a new instance of the windows command prompt and execute the command below.
-       * When the command below is put together, it is 'cmd /c start cmd /k java -jar Dfile.encoding=UTF-8 "${filename}" ${allArgs}'
+       * When the command below is put together, it is 'cmd /c start cmd /k java -jar Dfile.encoding=UTF-8 -Xmx1024M "${filename}" ${allArgs}'
        * which, when ran, simply runs the .JAR file that was executed (the BIN sniper!) and nothing else.
        *
        * This is done to ensure we have a console window to print output to, and so you can easily stop the program (via the exit button on the console)
