@@ -30,6 +30,15 @@ public class AtomicPrice {
     this.totalCount = new AtomicInteger(0);
   }
 
+  public void reset() {
+    this.lowestItemName.lazySet(null);
+    this.lowestKey.lazySet(null);
+    this.lowestValue.lazySet(-1);
+    this.lowestElapsedTime.lazySet(-1);
+    this.secondLowestValue.lazySet(-1);
+    this.totalCount.lazySet(0);
+  }
+
   public void tryUpdatePrice(String itemName, LazyObject binData) {
     long elapsed = System.currentTimeMillis() - binData.getLong("start");
     String id = binData.getString("uuid");
@@ -78,6 +87,24 @@ public class AtomicPrice {
 
   public int getProjectedProfit() {
     return secondLowestValue.get() - lowestValue.get();
+  }
+
+  public static class UnboundedAtomicPricePool extends UnboundedObjectPool<AtomicPrice> {
+
+    public UnboundedAtomicPricePool(int startSize) {
+      super(startSize);
+    }
+
+    @Override
+    public void offer(AtomicPrice object) {
+      object.reset();
+      super.offer(object);
+    }
+
+    @Override
+    protected AtomicPrice create() {
+      return new AtomicPrice();
+    }
   }
 
 }

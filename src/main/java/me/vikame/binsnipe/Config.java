@@ -74,6 +74,13 @@ public class Config {
   public static float MIN_PROFIT_PERCENTAGE = 110.0f;
   public static int MIN_PROFIT_AMOUNT = 1_000_000;
 
+  /* Whether to cache AtomicPrice objects in a pool rather than re-creating them every time.
+   *
+   * This can be quite memory intensive, however it should also prove to be a speed-up as we
+   * will no longer create 6 atomic objects every time we require an AtomicPrice.
+   */
+  public static boolean CACHE_ATOMIC_OBJECTS = true;
+
   /* Whether to explicitly ask the JVM to dispose of unused objects in memory. This should only be enabled if your machine is struggling with memory.
    *
    * I am well aware of the bad practice surrounding explicit GC calls, but in this situation an explicit GC can actually be quite beneficial as

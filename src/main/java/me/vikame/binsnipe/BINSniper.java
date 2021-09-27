@@ -34,8 +34,10 @@ import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
 import me.nullicorn.nedit.type.NBTCompound;
 import me.vikame.binsnipe.util.AtomicPrice;
+import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
 import me.vikame.binsnipe.util.ExpiringSet;
 import me.vikame.binsnipe.util.SBHelper;
+import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 public class BINSniper {
 
@@ -46,6 +48,8 @@ public class BINSniper {
   private final AtomicInteger totalPages;
   private final AtomicLong timeLastUpdated;
   private final Map<String, AtomicPrice> binPrices;
+
+  private final UnboundedObjectPool<AtomicPrice> objectPool;
 
   // We don't want to show the same flip multiple times, so we store a map of already-shown flips and the timestamp in which it should be shown again.
   private final ExpiringSet<String> flipsAlreadyShown;
@@ -63,6 +67,17 @@ public class BINSniper {
     totalPages = new AtomicInteger(-1);
     timeLastUpdated = new AtomicLong(-1);
     binPrices = new ConcurrentHashMap<>();
+
+    if (Config.CACHE_ATOMIC_OBJECTS) {
+      if (Config.EXPLICIT_GC_AFTER_FLIP) {
+        System.err.println(
+            "WARNING: The use-case of EXPLICIT_GC_AFTER_FLIP is nullified when CACHE_ATOMIC_OBJECTS is used. We recommend the use of one or the other, not both.");
+      }
+
+      objectPool = new UnboundedAtomicPricePool(2048);
+    } else {
+      objectPool = null;
+    }
 
     flipsAlreadyShown = new ExpiringSet<>(
         60000 * 5);
@@ -196,7 +211,7 @@ public class BINSniper {
                         .replace(" ✦", "")
                         .replace("⚚", "Fragged");
 
-                    binPrices.computeIfAbsent(itemId, ign -> new AtomicPrice())
+                    binPrices.computeIfAbsent(itemId, ign -> createAtomicPrice())
                         .tryUpdatePrice(filteredName, binData);
                     totalBins.incrementAndGet();
                   }
@@ -319,8 +334,12 @@ public class BINSniper {
             System.out.println("Unable to find a flip after " + timeTaken + " ms.");
           }
 
+          if (objectPool != null) {
+            binPrices.values().forEach(objectPool::offer);
+          }
           binPrices.clear();
-          totalBins.set(0);
+
+          totalBins.lazySet(0);
           System.out.println();
 
           if (Config.EXPLICIT_GC_AFTER_FLIP) {
@@ -329,6 +348,10 @@ public class BINSniper {
         }
       }
     }, 0, 1000, TimeUnit.MILLISECONDS);
+  }
+
+  private AtomicPrice createAtomicPrice() {
+    return objectPool != null ? objectPool.borrow() : new AtomicPrice();
   }
 
   private LazyArray getAuctions(int page) {
