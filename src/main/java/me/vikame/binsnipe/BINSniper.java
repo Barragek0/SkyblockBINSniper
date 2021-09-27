@@ -1,9 +1,15 @@
 package me.vikame.binsnipe;
 
+import java.awt.AWTException;
+import java.awt.SystemTray;
 import java.awt.Toolkit;
+import java.awt.TrayIcon;
+import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
+import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
@@ -22,6 +28,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
+import javax.imageio.ImageIO;
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
@@ -47,6 +54,9 @@ public class BINSniper {
   private final AtomicInteger totalAuctions;
   private final AtomicInteger totalBins;
 
+  // Used to display notifications to the user
+  private final TrayIcon notificationIcon;
+
   public BINSniper() {
     System.out.println("Starting BIN sniper...");
 
@@ -59,6 +69,29 @@ public class BINSniper {
 
     totalAuctions = new AtomicInteger();
     totalBins = new AtomicInteger();
+
+    if (SystemTray.isSupported()) {
+      InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream("icon.png");
+      BufferedImage image;
+      try {
+        image = ImageIO.read(stream);
+      } catch (IOException e) {
+        image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
+        System.err.println("Failed to find icon! Defaulting to blank icon...");
+      }
+
+      notificationIcon = new TrayIcon(image, "BIN Sniper");
+      notificationIcon.setImageAutoSize(true);
+
+      try {
+        SystemTray.getSystemTray().add(notificationIcon);
+      } catch (AWTException e) {
+        e.printStackTrace();
+        System.err.println("Failed to initialize notification system.");
+      }
+    } else {
+      this.notificationIcon = null;
+    }
 
     // Make an API request to get initial data before the sniper starts.
     getAuctions(0);
@@ -255,9 +288,11 @@ public class BINSniper {
                   + profitPercentage + "%) (" + timeTaken + "ms)");
             }
 
+            AtomicPrice best = flips.last().getValue();
+
             Toolkit.getDefaultToolkit().getSystemClipboard()
                 .setContents(
-                    new StringSelection("/viewauction " + flips.last().getValue().getLowestKey()),
+                    new StringSelection("/viewauction " + best.getLowestKey()),
                     null);
 
             Main.printDebug("Flip timing information:");
@@ -268,6 +303,17 @@ public class BINSniper {
 
             if (Config.SOUND_WHEN_FLIP_FOUND) {
               Toolkit.getDefaultToolkit().beep();
+            }
+
+            if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
+              notificationIcon.displayMessage(best.getLowestItemName()
+                      + " (# on AH: " + best.getTotalCount() + ")",
+                  "Price: " + NumberFormat.getInstance().format(best.getLowestValue()) + "\n" +
+                      "Second Lowest: " + NumberFormat.getInstance()
+                      .format(best.getSecondLowestValue()) + "\n" +
+                      "Profit (incl. taxes): " + NumberFormat.getInstance()
+                      .format(best.getProjectedProfit()),
+                  MessageType.INFO);
             }
           } else {
             System.out.println("Unable to find a flip after " + timeTaken + " ms.");
@@ -408,6 +454,12 @@ public class BINSniper {
       output.append("                 \r");
 
       System.out.print(output);
+    }
+  }
+
+  public void cleanup() {
+    if (SystemTray.isSupported() && notificationIcon != null) {
+      SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
 

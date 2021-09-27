@@ -1,5 +1,7 @@
 package me.vikame.binsnipe;
 
+import java.awt.SystemTray;
+
 public class Config {
 
   // The number of threads to use for making API requests, and parsing auction data, when finding flips.
@@ -9,7 +11,10 @@ public class Config {
   public static long TIMEOUT = 10000;
 
   // Whether to play a sound when a flip has been found.
-  public static boolean SOUND_WHEN_FLIP_FOUND = true;
+  public static boolean SOUND_WHEN_FLIP_FOUND = !SystemTray.isSupported();
+
+  // Whether to show a notification when a flip has been found.
+  public static boolean NOTIFICATION_WHEN_FLIP_FOUND = SystemTray.isSupported();
 
   /* Whether to add the "Accept-Encoding: gzip" header to API requests.
    * I would highly recommend against disabling this as it greatly reduces bandwith usage when enabled.

@@ -124,11 +124,14 @@ public class Main {
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
 
-      Runtime.getRuntime().addShutdownHook(new Thread(Main::shutdown));
+      BINSniper sniper = new BINSniper();
+
+      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+        shutdown();
+        sniper.cleanup();
+      }));
 
       System.out.println();
-
-      new BINSniper();
     }
   }
 
