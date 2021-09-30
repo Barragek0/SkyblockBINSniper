@@ -8,11 +8,13 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.text.NumberFormat;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import me.vikame.binsnipe.util.PrimitiveHelper;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *
@@ -69,18 +71,22 @@ public class Main {
             try {
               String prop = properties.getProperty(field.getName());
 
-              Class<?> type = field.getType();
-              if (type == boolean.class || type == Boolean.class) {
+              Class<?> type = PrimitiveHelper.wrap(field.getType());
+              if (type == Boolean.class) {
                 field.setBoolean(null, Boolean.parseBoolean(prop));
-              } else if (type == int.class || type == Integer.class) {
-                field.setInt(null, Integer.parseInt(prop));
-              } else if (type == float.class || type == Float.class) {
-                field.set(null, Float.parseFloat(prop));
-              } else if (type == long.class || type == Long.class) {
-                field.set(null, Long.parseLong(prop));
+              } else if (type == Integer.class) {
+                field.setInt(null, Integer.parseInt(prop.replace(",", "")));
+              } else if (type == Float.class) {
+                field.set(null, Float.parseFloat(prop.replace(",", "")));
+              } else if (type == Long.class) {
+                field.set(null, Long.parseLong(prop.replace(",", "")));
               } else {
                 System.out.println("Could not parse data type for " + field.getName() + ".");
                 continue;
+              }
+
+              if (Number.class.isAssignableFrom(type)) {
+                prop = NumberFormat.getInstance().format(field.get(null));
               }
 
               System.out.println(" > " + field.getName() + ": " + prop);
@@ -108,7 +114,16 @@ public class Main {
             }
 
             try {
-              properties.setProperty(field.getName(), field.get(null).toString());
+              Object value = field.get(null);
+
+              String propValue;
+              if (value instanceof Number) {
+                propValue = NumberFormat.getInstance().format(value);
+              } else {
+                propValue = value.toString();
+              }
+
+              properties.setProperty(field.getName(), propValue);
             } catch (IllegalAccessException e) {
               e.printStackTrace();
               System.out.println("Failed to get default config value for '" + field + "'");
