@@ -305,7 +305,9 @@ class BINSniper {
               }
 
               long timeTaken = System.currentTimeMillis() - start;
-              if (!flips.isEmpty()) {
+              if (flips.isEmpty()) {
+                System.out.println("Unable to find a flip after " + timeTaken + " ms.");
+              } else {
                 for (Map.Entry<String, AtomicPrice> entry : flips) {
                   flipsAlreadyShown.add(entry.getKey());
 
@@ -369,8 +371,6 @@ class BINSniper {
                           + NumberFormat.getInstance().format(best.getProjectedProfit()),
                       MessageType.INFO);
                 }
-              } else {
-                System.out.println("Unable to find a flip after " + timeTaken + " ms.");
               }
 
               // this doesn't want to be part of the multi-thread as it waits for the user
