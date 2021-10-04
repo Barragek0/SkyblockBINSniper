@@ -42,6 +42,8 @@ import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 public class BINSniper {
 
+  private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
+
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
 
@@ -484,34 +486,25 @@ public class BINSniper {
       SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
-  
+
+  private static String formatValue(final long amount, final long div, final char suffix) {
+    return PRINT_FORMAT.format(amount / (double) div) + suffix;
+  }
+
   public static String formatValue(final long amount) {
     if (amount >= 1_000_000_000_000_000L) {
-      return new DecimalFormat(".##").format(amount * 0.000_000_000_000_001).replace(',', '.') + "q";
+      return formatValue(amount, 1_000_000_000_000_000L, 'q');
     } else if (amount >= 1_000_000_000_000L) {
-      return new DecimalFormat(".##").format(amount * 0.000_000_000_001).replace(',', '.') + "t";
+      return formatValue(amount, 1_000_000_000_000L, 't');
     } else if (amount >= 1_000_000_000L) {
-      return new DecimalFormat(".##").format(amount * 0.000_000_001).replace(',', '.') + "b";
-    } else if (amount >= 1_000_000) {
-      return new DecimalFormat(".#").format(amount * 0.000_001).replace(',', '.') + "m";
-    } else if (amount >= 100_000) {
-      return getFormattedNumber(amount / 1_000, ',') + "k";
+      return formatValue(amount, 1_000_000_000L, 'b');
+    } else if (amount >= 1_000_000L) {
+      return formatValue(amount, 1_000_000L, 'm');
+    } else if (amount >= 100_000L) {
+      return formatValue(amount, 1000L, 'k');
     }
-    return getFormattedNumber(amount, ',');
-  }
-  
-  public static String getFormattedNumber(final double amount, final char seperator) {
-    final String str = new DecimalFormat("#,###,###").format(amount);
-    final char[] rebuff = new char[str.length()];
-    for (int i = 0; i < str.length(); i++) {
-      final char c = str.charAt(i);
-      if (c >= '0' && c <= '9') {
-        rebuff[i] = c;
-      } else {
-        rebuff[i] = seperator;
-      }
-    }
-    return new String(rebuff);
+
+    return NumberFormat.getInstance().format(amount);
   }
   
 }
