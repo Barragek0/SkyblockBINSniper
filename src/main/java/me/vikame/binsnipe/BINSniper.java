@@ -486,7 +486,6 @@ public class BINSniper {
   }
   
   public static String formatValue(final long amount) {
-    final String regularFormat = getFormattedNumber(amount, ',');
     if (amount >= 1_000_000_000_000_000L) {
       return new DecimalFormat(".##").format(amount * 0.000_000_000_000_001).replace(',', '.') + "q";
     } else if (amount >= 1_000_000_000_000L) {
@@ -498,7 +497,7 @@ public class BINSniper {
     } else if (amount >= 100_000) {
       return getFormattedNumber(amount / 1_000, ',') + "k";
     }
-    return amount < 100_000 ? regularFormat + "" : getFormattedNumber(amount, ',') + " - " + regularFormat;
+    return getFormattedNumber(amount, ',');
   }
   
   public static String getFormattedNumber(final double amount, final char seperator) {
