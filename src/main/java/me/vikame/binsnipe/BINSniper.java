@@ -19,6 +19,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.*;
@@ -28,6 +29,8 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 
 class BINSniper {
+
+  private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
 
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
@@ -325,11 +328,11 @@ class BINSniper {
                           + " | # BIN'd on AH: "
                           + price.getTotalCount()
                           + " | Price: "
-                          + NumberFormat.getInstance().format(lowest)
+                          + formatValue(lowest)
                           + " | Second lowest: "
-                          + NumberFormat.getInstance().format(second)
+                          + formatValue(second)
                           + " | Profit (incl. taxes): "
-                          + NumberFormat.getInstance().format(diff)
+                          + formatValue(diff)
                           + " (+"
                           + profitPercentage
                           + "%) ("
@@ -393,6 +396,26 @@ class BINSniper {
         0,
         1000,
         TimeUnit.MILLISECONDS);
+  }
+
+  private static String formatValue(final long amount, final long div, final char suffix) {
+    return PRINT_FORMAT.format(amount / (double) div) + suffix;
+  }
+
+  private static String formatValue(final long amount) {
+    if (amount >= 1_000_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000_000L, 'q');
+    } else if (amount >= 1_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000L, 't');
+    } else if (amount >= 1_000_000_000L) {
+      return formatValue(amount, 1_000_000_000L, 'b');
+    } else if (amount >= 1_000_000L) {
+      return formatValue(amount, 1_000_000L, 'm');
+    } else if (amount >= 100_000L) {
+      return formatValue(amount, 1000L, 'k');
+    }
+
+    return NumberFormat.getInstance().format(amount);
   }
 
   private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
@@ -472,7 +495,7 @@ class BINSniper {
       if (connection.getResponseCode() != 200) {
         connection.disconnect();
         return null; // As per https://api.hypixel.net/#tag/SkyBlock/paths/~1skyblock~1auctions/get,
-                     // all responses other than 200 indicate failure.
+        // all responses other than 200 indicate failure.
       }
 
       BufferedReader responseStreamReader;
