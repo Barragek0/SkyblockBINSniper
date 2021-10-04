@@ -32,8 +32,6 @@ class BINSniper {
 
   private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
 
-  private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
-
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
 
