@@ -14,6 +14,7 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -297,9 +298,9 @@ public class BINSniper {
               System.out.println("/viewauction " + price.getLowestKey()
                   + " | Item: " + price.getLowestItemName()
                   + " | # BIN'd on AH: " + price.getTotalCount()
-                  + " | Price: " + NumberFormat.getInstance().format(lowest)
-                  + " | Second lowest: " + NumberFormat.getInstance().format(second)
-                  + " | Profit (incl. taxes): " + NumberFormat.getInstance().format(diff) + " (+"
+                  + " | Price: " + formatValue(lowest)
+                  + " | Second lowest: " + formatValue(second)
+                  + " | Profit (incl. taxes): " + formatValue(diff) + " (+"
                   + profitPercentage + "%) (" + timeTaken + "ms)");
             }
 
@@ -323,11 +324,9 @@ public class BINSniper {
             if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
               notificationIcon.displayMessage(best.getLowestItemName()
                       + " (# on AH: " + best.getTotalCount() + ")",
-                  "Price: " + NumberFormat.getInstance().format(best.getLowestValue()) + "\n" +
-                      "Second Lowest: " + NumberFormat.getInstance()
-                      .format(best.getSecondLowestValue()) + "\n" +
-                      "Profit (incl. taxes): " + NumberFormat.getInstance()
-                      .format(best.getProjectedProfit()),
+                  "Price: " + formatValue(best.getLowestValue()) + "\n" +
+                      "Second Lowest: " + formatValue(best.getSecondLowestValue()) + "\n" +
+                      "Profit (incl. taxes): " + formatValue(best.getProjectedProfit()),
                   MessageType.INFO);
             }
           } else {
@@ -485,5 +484,34 @@ public class BINSniper {
       SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
-
+  
+  public static String formatValue(final long amount) {
+    if (amount >= 1_000_000_000_000_000L) {
+      return new DecimalFormat(".##").format(amount * 0.000_000_000_000_001).replace(',', '.') + "q";
+    } else if (amount >= 1_000_000_000_000L) {
+      return new DecimalFormat(".##").format(amount * 0.000_000_000_001).replace(',', '.') + "t";
+    } else if (amount >= 1_000_000_000L) {
+      return new DecimalFormat(".##").format(amount * 0.000_000_001).replace(',', '.') + "b";
+    } else if (amount >= 1_000_000) {
+      return new DecimalFormat(".#").format(amount * 0.000_001).replace(',', '.') + "m";
+    } else if (amount >= 100_000) {
+      return getFormattedNumber(amount / 1_000, ',') + "k";
+    }
+    return getFormattedNumber(amount, ',');
+  }
+  
+  public static String getFormattedNumber(final double amount, final char seperator) {
+    final String str = new DecimalFormat("#,###,###").format(amount);
+    final char[] rebuff = new char[str.length()];
+    for (int i = 0; i < str.length(); i++) {
+      final char c = str.charAt(i);
+      if (c >= '0' && c <= '9') {
+        rebuff[i] = c;
+      } else {
+        rebuff[i] = seperator;
+      }
+    }
+    return new String(rebuff);
+  }
+  
 }
