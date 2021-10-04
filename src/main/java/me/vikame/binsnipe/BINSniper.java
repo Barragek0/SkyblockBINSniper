@@ -344,9 +344,7 @@ class BINSniper {
 
                 AtomicPrice best = flips.last().getValue();
 
-                Toolkit.getDefaultToolkit()
-                    .getSystemClipboard()
-                    .setContents(new StringSelection("/viewauction " + best.getLowestKey()), null);
+                copyCommandToClipboard("/viewauction" + best.getLowestKey());
 
                 Main.printDebug("Flip timing information:");
                 Main.printDebug(" > " + timeTaken + "ms for page processing");
@@ -356,23 +354,13 @@ class BINSniper {
 
                 // If iterating is enabled, we can do these for each item while iterating instead
                 if (Config.SOUND_WHEN_FLIP_FOUND && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
-                  Toolkit.getDefaultToolkit().beep();
+                  sendSound();
                 }
 
                 if (Config.NOTIFICATION_WHEN_FLIP_FOUND
                     && notificationIcon != null
                     && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
-                  notificationIcon.displayMessage(
-                      best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
-                      "Price: "
-                          + NumberFormat.getInstance().format(best.getLowestValue())
-                          + "\n"
-                          + "Second Lowest: "
-                          + NumberFormat.getInstance().format(best.getSecondLowestValue())
-                          + "\n"
-                          + "Profit (incl. taxes): "
-                          + NumberFormat.getInstance().format(best.getProjectedProfit()),
-                      MessageType.INFO);
+                  sendNotification(best);
                 }
               }
 
@@ -421,14 +409,27 @@ class BINSniper {
     return NumberFormat.getInstance().format(amount);
   }
 
+  private void sendNotification(AtomicPrice best) {
+    if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
+      notificationIcon.displayMessage(
+          best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
+          "Price: "
+              + NumberFormat.getInstance().format(best.getLowestValue())
+              + "\n"
+              + "Second Lowest: "
+              + NumberFormat.getInstance().format(best.getSecondLowestValue())
+              + "\n"
+              + "Profit (incl. taxes): "
+              + NumberFormat.getInstance().format(best.getProjectedProfit()),
+          MessageType.INFO);
+    }
+  }
+
   private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
     singleThreadTaskRunning = true;
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
-      Toolkit.getDefaultToolkit()
-          .getSystemClipboard()
-          .setContents(
-              new StringSelection("/viewauction " + entry.getValue().getLowestKey()), null);
+      copyCommandToClipboard("/viewauction " + entry.getValue().getLowestKey());
       // wait here until control + v pressed
       System.out.println(
           "Clipboard set to "
@@ -437,24 +438,8 @@ class BINSniper {
               + ", paste the command in-game");
       KeyboardListener.canMoveOn = false;
 
-      if (Config.SOUND_WHEN_FLIP_FOUND) {
-        Toolkit.getDefaultToolkit().beep();
-      }
-
-      AtomicPrice best = flips.last().getValue();
-      if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
-        notificationIcon.displayMessage(
-            best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
-            "Price: "
-                + NumberFormat.getInstance().format(best.getLowestValue())
-                + "\n"
-                + "Second Lowest: "
-                + NumberFormat.getInstance().format(best.getSecondLowestValue())
-                + "\n"
-                + "Profit (incl. taxes): "
-                + NumberFormat.getInstance().format(best.getProjectedProfit()),
-            MessageType.INFO);
-      }
+      sendSound();
+      sendNotification(flips.last().getValue());
 
       while (!KeyboardListener.canMoveOn) {
         try {
@@ -464,6 +449,18 @@ class BINSniper {
       }
     }
     singleThreadTaskRunning = false;
+  }
+
+  private void sendSound() {
+    if (Config.SOUND_WHEN_FLIP_FOUND) {
+      Toolkit.getDefaultToolkit().beep();
+    }
+  }
+
+  private void copyCommandToClipboard(String command) {
+    Toolkit.getDefaultToolkit()
+        .getSystemClipboard()
+        .setContents(new StringSelection(command), null);
   }
 
   private AtomicPrice createAtomicPrice() {
