@@ -1,7 +1,6 @@
 package me.vikame.binsnipe.util;
 
 import me.vikame.binsnipe.Config;
-import me.vikame.binsnipe.Main;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
@@ -23,13 +22,17 @@ public class KeyboardListener implements NativeKeyListener {
     }
     switch (e.getKeyCode()) {
       case VC_CONTROL:
-        Main.printDebug("controlPressed = true");
+        if (Config.KEY_LISTENER_DEBUG) {
+          System.out.println("controlPressed = true");
+        }
         controlPressed = true;
         break;
       case VC_V:
         if (controlPressed) {
-          Main.printDebug("canMoveOn = true");
-          Main.printDebug("controlPressed = false");
+          if (Config.KEY_LISTENER_DEBUG) {
+            System.out.println("canMoveOn = true");
+            System.out.println("controlPressed = false");
+          }
           canMoveOn = true;
           controlPressed = false;
         }
@@ -43,7 +46,9 @@ public class KeyboardListener implements NativeKeyListener {
       System.out.println("Key Released: " + NativeKeyEvent.getKeyText(e.getKeyCode()));
     }
     if (e.getKeyCode() == VC_CONTROL) {
-      Main.printDebug("controlPressed = false");
+      if (Config.KEY_LISTENER_DEBUG) {
+        System.out.println("controlPressed = false");
+      }
       controlPressed = false;
     }
   }
