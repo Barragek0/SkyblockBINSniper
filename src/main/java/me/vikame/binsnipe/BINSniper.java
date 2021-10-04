@@ -587,4 +587,25 @@ class BINSniper {
       SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
+
+  private static String formatValue(final long amount, final long div, final char suffix) {
+    return PRINT_FORMAT.format(amount / (double) div) + suffix;
+  }
+
+  public static String formatValue(final long amount) {
+    if (amount >= 1_000_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000_000L, 'q');
+    } else if (amount >= 1_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000L, 't');
+    } else if (amount >= 1_000_000_000L) {
+      return formatValue(amount, 1_000_000_000L, 'b');
+    } else if (amount >= 1_000_000L) {
+      return formatValue(amount, 1_000_000L, 'm');
+    } else if (amount >= 100_000L) {
+      return formatValue(amount, 1000L, 'k');
+    }
+
+    return NumberFormat.getInstance().format(amount);
+  }
+  
 }
