@@ -32,6 +32,8 @@ class BINSniper {
 
   private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
 
+  private static final DecimalFormat PRINT_FORMAT = new DecimalFormat(".##");
+
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
 
@@ -587,4 +589,25 @@ class BINSniper {
       SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
+
+  private static String formatValue(final long amount, final long div, final char suffix) {
+    return PRINT_FORMAT.format(amount / (double) div) + suffix;
+  }
+
+  public static String formatValue(final long amount) {
+    if (amount >= 1_000_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000_000L, 'q');
+    } else if (amount >= 1_000_000_000_000L) {
+      return formatValue(amount, 1_000_000_000_000L, 't');
+    } else if (amount >= 1_000_000_000L) {
+      return formatValue(amount, 1_000_000_000L, 'b');
+    } else if (amount >= 1_000_000L) {
+      return formatValue(amount, 1_000_000L, 'm');
+    } else if (amount >= 100_000L) {
+      return formatValue(amount, 1000L, 'k');
+    }
+
+    return NumberFormat.getInstance().format(amount);
+  }
+  
 }
