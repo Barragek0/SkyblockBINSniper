@@ -354,11 +354,14 @@ class BINSniper {
                 Main.printDebug(
                     " > In total, " + (System.currentTimeMillis() - newUpdateTime) + "ms late");
 
-                if (Config.SOUND_WHEN_FLIP_FOUND) {
+                // If iterating is enabled, we can do these for each item while iterating instead
+                if (Config.SOUND_WHEN_FLIP_FOUND && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
                   Toolkit.getDefaultToolkit().beep();
                 }
 
-                if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
+                if (Config.NOTIFICATION_WHEN_FLIP_FOUND
+                    && notificationIcon != null
+                    && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
                   notificationIcon.displayMessage(
                       best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
                       "Price: "
@@ -433,6 +436,26 @@ class BINSniper {
               + entry.getValue().getLowestKey()
               + ", paste the command in-game");
       KeyboardListener.canMoveOn = false;
+
+      if (Config.SOUND_WHEN_FLIP_FOUND) {
+        Toolkit.getDefaultToolkit().beep();
+      }
+
+      AtomicPrice best = flips.last().getValue();
+      if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
+        notificationIcon.displayMessage(
+            best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
+            "Price: "
+                + NumberFormat.getInstance().format(best.getLowestValue())
+                + "\n"
+                + "Second Lowest: "
+                + NumberFormat.getInstance().format(best.getSecondLowestValue())
+                + "\n"
+                + "Profit (incl. taxes): "
+                + NumberFormat.getInstance().format(best.getProjectedProfit()),
+            MessageType.INFO);
+      }
+
       while (!KeyboardListener.canMoveOn) {
         try {
           Thread.sleep(200);
