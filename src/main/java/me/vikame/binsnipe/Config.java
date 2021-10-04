@@ -89,11 +89,22 @@ public class Config {
    * objects thus creating no immediate need for garbage collection.
    */
   public static boolean EXPLICIT_GC_AFTER_FLIP = false;
+  
+  /* Whether to iterate across results and copy the /viewauction command for each result,
+   * one by one, waiting until control + v is pressed before moving onto the next result.
+   * Much easier than copying each command manually if you want to check more than one result
+   * but, on my system at least, JNativeHook requires admin rights to start successfully.
+   * Easy way to do this is to create a shortcut to the .jar and set the shortcut to run as admin.
+   */
+  public static boolean ITERATE_RESULTS_TO_CLIPBOARD = false;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe progress.
   public static transient int LOADING_BAR_SEGMENTS = 40;
-
+  
   // Whether to enable debug logging. Do note that this could be spammy and is not meant to be used normally.
   public static transient boolean DEBUG = false;
+  
+  // Whether to enable key listener debug logging. Very spammy.
+  public static transient boolean KEY_LISTENER_DEBUG = false;
 
 }

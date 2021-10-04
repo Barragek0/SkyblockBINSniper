@@ -14,7 +14,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.PrimitiveHelper;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *
@@ -24,7 +30,7 @@ public class Main {
 
   private static ScheduledExecutorService THREAD_POOL;
 
-  public static void main(String[] args) throws IOException {
+  public static void main(String[] args) throws IOException, NativeHookException {
     Console console = System.console();
     if (console == null
         && !GraphicsEnvironment.isHeadless()) { // Ensure we have a console window to work with!
@@ -141,6 +147,18 @@ public class Main {
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
 
+      // only start keyboard listener if we're going to iterate
+      if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
+        // Logger defaults to all, change it to warning
+        Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
+        logger.setLevel(Level.WARNING);
+        logger.setUseParentHandlers(false);
+        
+        // Register the keyboard listener
+        GlobalScreen.registerNativeHook();
+        GlobalScreen.addNativeKeyListener(new KeyboardListener());
+      }
+      
       BINSniper sniper = new BINSniper();
 
       Runtime.getRuntime().addShutdownHook(new Thread(() -> {
