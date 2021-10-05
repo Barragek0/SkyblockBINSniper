@@ -54,16 +54,16 @@ public class Main {
        */
       Runtime.getRuntime()
           .exec(
-              new String[]{
-                  "cmd",
-                  "/c",
-                  "start",
-                  "cmd",
-                  "/k",
-                  "java -jar -Dfile.encoding=UTF-8 -Xmx1024M \""
-                      + filename
-                      + "\" "
-                      + allArgs.toString().trim()
+              new String[] {
+                "cmd",
+                "/c",
+                "start",
+                "cmd",
+                "/k",
+                "java -jar -Dfile.encoding=UTF-8 -Xmx1024M \""
+                    + filename
+                    + "\" "
+                    + allArgs.toString().trim()
               });
     } else {
       System.setErr(System.out);
@@ -116,44 +116,42 @@ public class Main {
           e.printStackTrace();
           System.out.println("Failed to read configuration data. Using defaults...");
         }
-      } else {
-        if (!config.createNewFile()) {
-          System.out.println(
-              "Couldn't create configuration file! You will be forced to use default sniper preferences.");
-        } else {
-          Properties properties = new Properties();
+      } else if (config.createNewFile()) {
+        Properties properties = new Properties();
 
-          for (Field field : Config.class.getDeclaredFields()) {
-            if (Modifier.isTransient(field.getModifiers())) {
-              continue;
-            }
-
-            try {
-              Object value = field.get(null);
-
-              String propValue;
-              if (value instanceof Number) {
-                propValue = NumberFormat.getInstance().format(value);
-              } else {
-                propValue = value.toString();
-              }
-
-              properties.setProperty(field.getName(), propValue);
-            } catch (IllegalAccessException e) {
-              e.printStackTrace();
-              System.out.println("Failed to get default config value for '" + field + "'");
-            }
+        for (Field field : Config.class.getDeclaredFields()) {
+          if (Modifier.isTransient(field.getModifiers())) {
+            continue;
           }
 
-          FileWriter writer = new FileWriter(config);
-          properties.store(writer, "Skyblock BIN Sniper configuration data");
-          writer.close();
+          try {
+            Object value = field.get(null);
 
-          System.out.println(
-              "A Configuration file to edit sniper preferences has been created at '"
-                  + config.getAbsolutePath()
-                  + "'");
+            String propValue;
+            if (value instanceof Number) {
+              propValue = NumberFormat.getInstance().format(value);
+            } else {
+              propValue = value.toString();
+            }
+
+            properties.setProperty(field.getName(), propValue);
+          } catch (IllegalAccessException e) {
+            e.printStackTrace();
+            System.out.println("Failed to get default config value for '" + field + "'");
+          }
         }
+
+        FileWriter writer = new FileWriter(config);
+        properties.store(writer, "Skyblock BIN Sniper configuration data");
+        writer.close();
+
+        System.out.println(
+            "A Configuration file to edit sniper preferences has been created at '"
+                + config.getAbsolutePath()
+                + "'");
+      } else {
+        System.out.println(
+            "Couldn't create configuration file! You will be forced to use default sniper preferences.");
       }
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
@@ -184,7 +182,7 @@ public class Main {
     }
   }
 
-  public static void printDebug(String line) {
+  static void printDebug(String line) {
     if (Config.DEBUG) {
       System.out.println(line);
     }
@@ -194,7 +192,7 @@ public class Main {
     return THREAD_POOL;
   }
 
-  public static void shutdown() {
+  private static void shutdown() {
     THREAD_POOL.shutdown();
     try {
       if (!THREAD_POOL.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS)) {
@@ -205,11 +203,11 @@ public class Main {
     }
   }
 
-  public static CompletableFuture<Void> exec(Runnable runnable) {
+  static CompletableFuture<Void> exec(Runnable runnable) {
     return CompletableFuture.runAsync(runnable, THREAD_POOL);
   }
 
-  public static void schedule(Runnable runnable, long initialDelay, long delay, TimeUnit unit) {
+  static void schedule(Runnable runnable, long initialDelay, long delay, TimeUnit unit) {
     THREAD_POOL.scheduleAtFixedRate(runnable, initialDelay, delay, unit);
   }
 }
