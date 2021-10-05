@@ -1,7 +1,6 @@
 package me.vikame.binsnipe.util;
 
 import me.doubledutch.lazyjson.LazyObject;
-import me.vikame.binsnipe.Config;
 import me.vikame.binsnipe.Constants;
 
 public class SBHelper {
@@ -25,29 +24,6 @@ public class SBHelper {
   public static String stripInvalidChars(String itemName) {
     return Constants.STRIP_COLOR_PATTERN.matcher(itemName).replaceAll("")
         .replaceAll("\\p{C}}", "");
-  }
-
-  public static String stripItemName(LazyObject object) {
-    return stripItemName(object.getString("item_name"));
-  }
-
-  public static String stripItemName(String itemName) {
-    String ret = itemName;
-
-    ret = Constants.STRIP_COLOR_PATTERN.matcher(ret).replaceAll("");
-
-    for (String text : Constants.IGNORED_TEXT) {
-      ret = ret.replace(text, "");
-    }
-
-    if (Config.IGNORE_STARS) {
-      ret = ret.replace(" ✪", "").replace("✪", "");
-    } else {
-      ret = ret.replace("✪", "*");
-    }
-
-    ret = ret.replaceFirst("\\[Lvl \\d*] ", "");
-    return ret.trim();
   }
 
   public static boolean isRecombed(LazyObject object) {

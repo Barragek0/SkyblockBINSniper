@@ -16,7 +16,6 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-
 import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.PrimitiveHelper;
 import org.jnativehook.GlobalScreen;
@@ -34,8 +33,8 @@ public class Main {
     Console console = System.console();
     if (console == null
         && !GraphicsEnvironment.isHeadless()) { // Ensure we have a console window to work with!
-      String filename = Main.class.getProtectionDomain().getCodeSource().getLocation().toString()
-          .substring(6);
+      String filename =
+          Main.class.getProtectionDomain().getCodeSource().getLocation().toString().substring(6);
 
       StringBuilder allArgs = new StringBuilder();
       for (String str : args) {
@@ -53,9 +52,19 @@ public class Main {
        *
        * To add to this, this code is directly taken (and slightly modified) from https://stackoverflow.com/a/29138847
        */
-      Runtime.getRuntime().exec(new String[]{"cmd", "/c", "start", "cmd", "/k",
-          "java -jar -Dfile.encoding=UTF-8 -Xmx1024M \"" + filename + "\" " + allArgs.toString()
-              .trim()});
+      Runtime.getRuntime()
+          .exec(
+              new String[]{
+                  "cmd",
+                  "/c",
+                  "start",
+                  "cmd",
+                  "/k",
+                  "java -jar -Dfile.encoding=UTF-8 -Xmx1024M \""
+                      + filename
+                      + "\" "
+                      + allArgs.toString().trim()
+              });
     } else {
       System.setErr(System.out);
 
@@ -140,8 +149,10 @@ public class Main {
           properties.store(writer, "Skyblock BIN Sniper configuration data");
           writer.close();
 
-          System.out.println("A Configuration file to edit sniper preferences has been created at '"
-              + config.getAbsolutePath() + "'");
+          System.out.println(
+              "A Configuration file to edit sniper preferences has been created at '"
+                  + config.getAbsolutePath()
+                  + "'");
         }
       }
 
@@ -153,18 +164,21 @@ public class Main {
         Logger logger = Logger.getLogger(GlobalScreen.class.getPackage().getName());
         logger.setLevel(Level.WARNING);
         logger.setUseParentHandlers(false);
-        
+
         // Register the keyboard listener
         GlobalScreen.registerNativeHook();
         GlobalScreen.addNativeKeyListener(new KeyboardListener());
       }
-      
+
       BINSniper sniper = new BINSniper();
 
-      Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-        shutdown();
-        sniper.cleanup();
-      }));
+      Runtime.getRuntime()
+          .addShutdownHook(
+              new Thread(
+                  () -> {
+                    shutdown();
+                    sniper.cleanup();
+                  }));
 
       System.out.println();
     }
@@ -198,5 +212,4 @@ public class Main {
   public static void schedule(Runnable runnable, long initialDelay, long delay, TimeUnit unit) {
     THREAD_POOL.scheduleAtFixedRate(runnable, initialDelay, delay, unit);
   }
-
 }

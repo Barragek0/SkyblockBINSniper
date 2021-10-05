@@ -1,14 +1,9 @@
 package me.vikame.binsnipe;
 
-import me.doubledutch.lazyjson.LazyArray;
-import me.doubledutch.lazyjson.LazyObject;
-import me.nullicorn.nedit.NBTReader;
-import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.*;
-import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.SystemTray;
+import java.awt.Toolkit;
+import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -21,12 +16,30 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Comparator;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.*;
-import java.util.concurrent.*;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
+import javax.imageio.ImageIO;
+import me.doubledutch.lazyjson.LazyArray;
+import me.doubledutch.lazyjson.LazyObject;
+import me.nullicorn.nedit.NBTReader;
+import me.nullicorn.nedit.type.NBTCompound;
+import me.vikame.binsnipe.util.AtomicPrice;
+import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
+import me.vikame.binsnipe.util.ExpiringSet;
+import me.vikame.binsnipe.util.KeyboardListener;
+import me.vikame.binsnipe.util.SBHelper;
+import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 class BINSniper {
 
@@ -39,7 +52,6 @@ class BINSniper {
   private final AtomicInteger totalPages;
   private final AtomicLong timeLastUpdated;
   private final Map<String, AtomicPrice> binPrices;
-
   private final UnboundedObjectPool<AtomicPrice> objectPool;
 
   // We don't want to show the same flip multiple times, so we store a map of already-shown flips
@@ -53,7 +65,11 @@ class BINSniper {
   // Used to display notifications to the user
   private final TrayIcon notificationIcon;
 
-  private boolean singleThreadTaskRunning = false;
+  // Used for printing strings that are able to be "erased"
+  private int lastClearableLength = -1;
+
+  // Iterative task for copying flips to the clipboard.
+  private CompletableFuture<Void> iterativeTask;
 
   BINSniper() {
     System.out.println("Starting BIN sniper...");
@@ -90,13 +106,6 @@ class BINSniper {
 
       notificationIcon = new TrayIcon(image, "BIN Sniper");
       notificationIcon.setImageAutoSize(true);
-
-      try {
-        SystemTray.getSystemTray().add(notificationIcon);
-      } catch (AWTException e) {
-        e.printStackTrace();
-        System.err.println("Failed to initialize notification system.");
-      }
     } else {
       this.notificationIcon = null;
     }
@@ -108,18 +117,25 @@ class BINSniper {
         () -> {
           long lastUpdateTime = timeLastUpdated.get();
           if ((System.currentTimeMillis() - lastUpdateTime) > 60000) {
-            // temporarily stop this while copy/paste task is going on
-            if (singleThreadTaskRunning) {
-              return;
-            }
             getAuctions(0);
             long newUpdateTime = timeLastUpdated.get();
             long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
             if (lastUpdateTime != newUpdateTime) {
+              // Notify the user that they took too long to paste the command, cleanup old data, and
+              // continue.
+              if (iterativeTask != null && !iterativeTask.isDone()) {
+                cleanupAuctionData();
+                clearString();
+                iterativeTask.cancel(true);
+                System.out.println(
+                    "Commands were not pasted before we started a new flip attempt.");
+              }
+
               AtomicInteger completed = new AtomicInteger(0);
               final int maxPages = totalPages.get();
 
+              System.out.println();
               printLoadingBar(0, maxPages);
 
               List<CompletableFuture<Void>> futures = new LinkedList<>();
@@ -130,10 +146,8 @@ class BINSniper {
                 CompletableFuture<Void> future =
                     Main.exec(
                         () -> {
-                          if (workingPage
-                              < totalPages
-                                  .get()) { // Ensure that this is still a valid page we need to
-                            // look at.
+                          // Ensure that this is still a valid page we need to look at.
+                          if (workingPage < totalPages.get()) {
                             LazyArray auctionArray = getAuctions(workingPage);
                             if (auctionArray != null) {
                               for (int i = 0; i < auctionArray.length(); i++) {
@@ -239,10 +253,7 @@ class BINSniper {
                           }
                         });
 
-                future.thenRun(
-                    () -> {
-                      printLoadingBar(completed.incrementAndGet(), maxPages);
-                    });
+                future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
                 futures.add(future);
               }
 
@@ -251,14 +262,14 @@ class BINSniper {
                   try {
                     future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
                   } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    clearLoadingBar();
+                    clearString();
                     System.out.println("Flips took too long to process, and timed out.");
                     return;
                   }
                 }
               }
 
-              clearLoadingBar();
+              clearString();
 
               TreeSet<Map.Entry<String, AtomicPrice>> flips =
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
@@ -344,7 +355,7 @@ class BINSniper {
 
                 AtomicPrice best = flips.last().getValue();
 
-                copyCommandToClipboard("/viewauction" + best.getLowestKey());
+                copyCommandToClipboard("/viewauction " + best.getLowestKey());
 
                 Main.printDebug("Flip timing information:");
                 Main.printDebug(" > " + timeTaken + "ms for page processing");
@@ -353,33 +364,20 @@ class BINSniper {
                     " > In total, " + (System.currentTimeMillis() - newUpdateTime) + "ms late");
 
                 // If iterating is enabled, we can do these for each item while iterating instead
-                if (Config.SOUND_WHEN_FLIP_FOUND && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
+                if (!Config.ITERATE_RESULTS_TO_CLIPBOARD) {
                   sendSound();
-                }
-
-                if (Config.NOTIFICATION_WHEN_FLIP_FOUND
-                    && notificationIcon != null
-                    && !Config.ITERATE_RESULTS_TO_CLIPBOARD) {
                   sendNotification(best);
                 }
               }
 
-              // this doesn't want to be part of the multi-thread as it waits for the user
-              // to paste the command, calling it as an outside method accomplishes that
+              // If we are iterating over results and copying, start the task and only cleanup
+              // afterward.
               if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
-                iterateResultsToClipboard(flips);
-              }
-
-              if (objectPool != null) {
-                binPrices.values().forEach(objectPool::offer);
-              }
-              binPrices.clear();
-
-              totalBins.lazySet(0);
-              System.out.println();
-
-              if (Config.EXPLICIT_GC_AFTER_FLIP) {
-                System.gc();
+                iterativeTask =
+                    Main.exec(() -> iterateResultsToClipboard(flips))
+                        .thenRun(this::cleanupAuctionData);
+              } else {
+                cleanupAuctionData();
               }
             }
           }
@@ -409,8 +407,29 @@ class BINSniper {
     return NumberFormat.getInstance().format(amount);
   }
 
+  private void cleanupAuctionData() {
+    if (objectPool != null) {
+      binPrices.values().forEach(objectPool::offer);
+    }
+
+    binPrices.clear();
+    totalBins.lazySet(0);
+
+    if (Config.EXPLICIT_GC_AFTER_FLIP) {
+      System.gc();
+    }
+  }
+
   private void sendNotification(AtomicPrice best) {
     if (Config.NOTIFICATION_WHEN_FLIP_FOUND && notificationIcon != null) {
+      try {
+        // Add our notification icon to the system tray.
+        SystemTray.getSystemTray().add(notificationIcon);
+      } catch (AWTException e) {
+        e.printStackTrace();
+        System.err.println("Failed to initialize notification system.");
+      }
+
       notificationIcon.displayMessage(
           best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
           "Price: "
@@ -422,33 +441,53 @@ class BINSniper {
               + "Profit (incl. taxes): "
               + NumberFormat.getInstance().format(best.getProjectedProfit()),
           MessageType.INFO);
+
+      // Remove the system tray icon once we have displayed a message.
+      SystemTray.getSystemTray().remove(notificationIcon);
     }
   }
 
-  private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
-    singleThreadTaskRunning = true;
+  private void iterateResultsToClipboard(final TreeSet<Map.Entry<String, AtomicPrice>> flips) {
+    System.out.println();
+
+    int finished = 0;
+    int size = flips.size();
+
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
       copyCommandToClipboard("/viewauction " + entry.getValue().getLowestKey());
       // wait here until control + v pressed
-      System.out.println(
+      printClearableString(
           "Clipboard set to "
               + "/viewauction "
               + entry.getValue().getLowestKey()
-              + ", paste the command in-game");
-      KeyboardListener.canMoveOn = false;
+              + ", paste the command in-game ("
+              + (finished + 1)
+              + "/"
+              + size
+              + ")");
 
       sendSound();
-      sendNotification(flips.last().getValue());
+      sendNotification(entry.getValue());
 
-      while (!KeyboardListener.canMoveOn) {
-        try {
-          Thread.sleep(200);
-        } catch (InterruptedException ignored) {
-        }
+      Thread current = Thread.currentThread();
+
+      // Interrupt the sleeping thread when the paste callback is triggered.
+      KeyboardListener.pasteCallback =
+          current::interrupt;
+
+      try {
+        // Block the thread indefinitely until the pasteCallback interrupts the thread.
+        Thread.sleep(
+            Long
+                .MAX_VALUE);
+      } catch (InterruptedException e) {
       }
+
+      finished++;
     }
-    singleThreadTaskRunning = false;
+
+    clearString();
   }
 
   private void sendSound() {
@@ -560,6 +599,32 @@ class BINSniper {
     return null;
   }
 
+  private void printClearableString(String clearable) {
+    synchronized (lock) {
+      int lastClearable = lastClearableLength;
+
+      lastClearableLength = clearable.length();
+      StringBuilder output = new StringBuilder("\r").append(clearable);
+
+      if (lastClearable != -1 && lastClearable > lastClearableLength) {
+        for (int i = 0; i < lastClearable - lastClearableLength; i++) {
+          output.append(' ');
+        }
+      }
+
+      System.out.print(output);
+    }
+  }
+
+  private void clearString() {
+    synchronized (lock) {
+      if (lastClearableLength != -1) {
+        clearChars(lastClearableLength);
+        lastClearableLength = -1;
+      }
+    }
+  }
+
   private void printLoadingBar(int current, int max) {
     synchronized (lock) {
       float progress = (float) current / (float) max;
@@ -586,17 +651,17 @@ class BINSniper {
           .append(max)
           .append(")");
 
-      System.out.print(output);
+      printClearableString(output.toString());
     }
   }
 
-  private void clearLoadingBar() {
+  private void clearChars(int amt) {
     synchronized (lock) {
-      StringBuilder output = new StringBuilder("\r ");
-      for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
+      StringBuilder output = new StringBuilder("\r");
+      for (int i = 0; i < amt; i++) {
         output.append(' ');
       }
-      output.append("                 \r");
+      output.append("\r");
 
       System.out.print(output);
     }

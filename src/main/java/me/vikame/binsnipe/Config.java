@@ -1,6 +1,6 @@
 package me.vikame.binsnipe;
 
-import java.awt.*;
+import java.awt.SystemTray;
 
 public class Config {
 
@@ -100,7 +100,7 @@ public class Config {
    * one by one, waiting until control + v is pressed before moving onto the next result.
    * Much easier than copying each command manually if you want to check more than one result.
    */
-  static boolean ITERATE_RESULTS_TO_CLIPBOARD = false;
+  static boolean ITERATE_RESULTS_TO_CLIPBOARD = true;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
