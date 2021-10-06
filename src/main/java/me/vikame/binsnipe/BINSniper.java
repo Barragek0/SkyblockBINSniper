@@ -458,6 +458,8 @@ class BINSniper {
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
       String key = entry.getValue().getLowestKey();
 
+      Main.printDebug("Copying auction " + key + "!");
+
       copyCommandToClipboard("/viewauction " + key);
       // wait here until control + v pressed
       printClearableString(

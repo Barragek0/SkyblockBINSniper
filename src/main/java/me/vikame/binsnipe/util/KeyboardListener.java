@@ -12,12 +12,15 @@ public class KeyboardListener implements NativeKeyListener {
   public static Runnable pasteCallback;
 
   @Override
-  public void nativeKeyTyped(NativeKeyEvent nativeKeyEvent) {}
+  public void nativeKeyTyped(NativeKeyEvent e) {}
 
   @Override
-  public void nativeKeyPressed(NativeKeyEvent e) {
+  public void nativeKeyPressed(NativeKeyEvent e) {}
+
+  @Override
+  public void nativeKeyReleased(NativeKeyEvent e) {
     if (Config.KEY_LISTENER_DEBUG) {
-      System.out.println("Key Pressed: " + NativeKeyEvent.getModifiersText(e.getModifiers()) + "+" + NativeKeyEvent.getKeyText(e.getKeyCode()));
+      System.out.println("Key Released: " + NativeKeyEvent.getModifiersText(e.getModifiers()) + "+" + NativeKeyEvent.getKeyText(e.getKeyCode()));
     }
 
     if (e.getKeyCode() == VC_V) {
@@ -29,9 +32,6 @@ public class KeyboardListener implements NativeKeyListener {
       }
     }
   }
-
-  @Override
-  public void nativeKeyReleased(NativeKeyEvent e) {}
 }
 
 
