@@ -150,7 +150,9 @@ class BINSniper {
                           // Ensure that this is still a valid page we need to look at.
                           if (workingPage < totalPages.get()) {
                             LazyArray auctionArray = getAuctions(workingPage);
+
                             if (auctionArray != null) {
+                              long pageStart = System.currentTimeMillis();
                               for (int i = 0; i < auctionArray.length(); i++) {
                                 LazyObject binData = auctionArray.getJSONObject(i);
                                 if (!SBHelper.isExistingBIN(binData)) {
@@ -250,6 +252,10 @@ class BINSniper {
                                     .tryUpdatePrice(filteredName, binData);
                                 totalBins.incrementAndGet();
                               }
+
+                              long pageEnd = System.currentTimeMillis();
+
+                              Main.printDebug("Parsed page " + workingPage + " in " + (pageEnd - pageStart) + "ms.");
                             }
                           }
                         });
