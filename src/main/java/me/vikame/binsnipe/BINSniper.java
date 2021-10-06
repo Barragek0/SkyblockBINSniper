@@ -386,10 +386,6 @@ class BINSniper {
         0,
         1000,
         TimeUnit.MILLISECONDS);
-
-    /*
-    /viewauction aea88739025d4d48974a9a4566640c37/viewauction aea88739025d4d48974a9a4566640c37
-     */
   }
 
   private static String formatValue(final long amount, final long div, final char suffix) {
