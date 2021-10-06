@@ -258,16 +258,23 @@ class BINSniper {
                 futures.add(future);
               }
 
+              boolean shouldCancel = false;
               for (CompletableFuture<Void> future : futures) {
                 if (!future.isDone()) {
+                  if(shouldCancel) future.cancel(true);
+
                   try {
                     future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
                   } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    clearString();
-                    System.out.println("Flips took too long to process, and timed out.");
-                    return;
+                    shouldCancel = true;
                   }
                 }
+              }
+
+              if(shouldCancel) {
+                clearString();
+                System.out.println("Flips took too long to process, and timed out.");
+                return;
               }
 
               clearString();
