@@ -385,6 +385,10 @@ class BINSniper {
         0,
         1000,
         TimeUnit.MILLISECONDS);
+
+    /*
+    /viewauction aea88739025d4d48974a9a4566640c37/viewauction aea88739025d4d48974a9a4566640c37
+     */
   }
 
   private static String formatValue(final long amount, final long div, final char suffix) {
@@ -455,12 +459,14 @@ class BINSniper {
 
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
-      copyCommandToClipboard("/viewauction " + entry.getValue().getLowestKey());
+      String key = entry.getValue().getLowestKey();
+
+      copyCommandToClipboard("/viewauction " + key);
       // wait here until control + v pressed
       printClearableString(
           "Clipboard set to "
               + "/viewauction "
-              + entry.getValue().getLowestKey()
+              + key
               + ", paste the command in-game ("
               + (finished + 1)
               + "/"

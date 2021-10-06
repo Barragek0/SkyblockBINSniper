@@ -20,12 +20,13 @@ public class KeyboardListener implements NativeKeyListener {
       System.out.println("Key Pressed: " + NativeKeyEvent.getModifiersText(e.getModifiers()) + "+" + NativeKeyEvent.getKeyText(e.getKeyCode()));
     }
 
-    switch (e.getKeyCode()) {
-      case VC_V:
-        if ((e.getModifiers() & CTRL_MASK) != 0) {
-          if(pasteCallback != null) pasteCallback.run();
+    if (e.getKeyCode() == VC_V) {
+      if ((e.getModifiers() & CTRL_MASK) != 0) {
+        if (pasteCallback != null) {
+          pasteCallback.run();
+          pasteCallback = null;
         }
-        break;
+      }
     }
   }
 
