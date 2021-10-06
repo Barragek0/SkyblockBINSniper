@@ -261,12 +261,15 @@ class BINSniper {
               boolean shouldCancel = false;
               for (CompletableFuture<Void> future : futures) {
                 if (!future.isDone()) {
-                  if(shouldCancel) future.cancel(true);
-
-                  try {
-                    future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
-                  } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                    shouldCancel = true;
+                  if(shouldCancel) {
+                    future.cancel(true);
+                  } else {
+                    try {
+                      future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                      future.cancel(true);
+                      shouldCancel = true;
+                    }
                   }
                 }
               }
