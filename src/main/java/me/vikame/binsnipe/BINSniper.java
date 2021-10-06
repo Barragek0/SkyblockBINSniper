@@ -98,8 +98,9 @@ class BINSniper {
       InputStream stream = ClassLoader.getSystemClassLoader().getResourceAsStream("icon.png");
       BufferedImage image;
       try {
+        assert stream != null;
         image = ImageIO.read(stream);
-      } catch (IOException e) {
+      } catch (AssertionError | IOException e) {
         image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         System.err.println("Failed to find icon! Defaulting to blank icon...");
       }
@@ -479,15 +480,12 @@ class BINSniper {
       Thread current = Thread.currentThread();
 
       // Interrupt the sleeping thread when the paste callback is triggered.
-      KeyboardListener.pasteCallback =
-          current::interrupt;
+      KeyboardListener.pasteCallback = current::interrupt;
 
       try {
         // Block the thread indefinitely until the pasteCallback interrupts the thread.
-        Thread.sleep(
-            Long
-                .MAX_VALUE);
-      } catch (InterruptedException e) {
+        Thread.sleep(Long.MAX_VALUE);
+      } catch (InterruptedException ignored) {
       }
 
       finished++;
