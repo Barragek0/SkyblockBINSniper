@@ -280,13 +280,14 @@ class BINSniper {
                 }
               }
 
+              clearString();
+
               if(shouldCancel) {
-                clearString();
                 System.out.println("Flips took too long to process, and timed out.");
                 return;
               }
 
-              clearString();
+              Main.printDebug(binPrices.size() + " total BINs processed!");
 
               TreeSet<Map.Entry<String, AtomicPrice>> flips =
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
