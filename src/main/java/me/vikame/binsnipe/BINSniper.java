@@ -283,7 +283,9 @@ class BINSniper {
               clearString();
 
               if(shouldCancel) {
-                System.out.println("Flips took too long to process, and timed out.");
+                System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
+                System.out.println("This may be due to your internet connection being slow, or");
+                System.out.println("the Hypixel API may be responding slowly.");
                 return;
               }
 
