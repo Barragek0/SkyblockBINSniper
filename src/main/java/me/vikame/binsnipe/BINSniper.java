@@ -151,6 +151,8 @@ class BINSniper {
                           if (workingPage < totalPages.get()) {
                             LazyArray auctionArray = getAuctions(workingPage);
 
+                            Main.printDebug("Got page " + workingPage + " from API.");
+
                             if (auctionArray != null) {
                               long pageStart = System.currentTimeMillis();
                               for (int i = 0; i < auctionArray.length(); i++) {
