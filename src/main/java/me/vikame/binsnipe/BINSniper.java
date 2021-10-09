@@ -17,8 +17,6 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Comparator;
-import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -145,7 +143,8 @@ class BINSniper {
               System.out.println();
               printLoadingBar(0, maxPages);
 
-              List<CompletableFuture<Void>> futures = new LinkedList<>();
+              // noinspection rawtypes: We will only store CompletableFuture<Void> in this array.
+              CompletableFuture[] futures = new CompletableFuture[maxPages];
 
               long start = System.currentTimeMillis();
               for (int page = 0; page < maxPages; page++) {
@@ -268,34 +267,22 @@ class BINSniper {
                           }
                         });
 
-                future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
-                futures.add(future);
+                futures[workingPage] = future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
               }
 
-              boolean shouldCancel = false;
-              for (CompletableFuture<Void> future : futures) {
-                if (!future.isDone()) {
-                  if(shouldCancel) {
-                    future.cancel(true);
-                  } else {
-                    try {
-                      future.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
-                    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                      future.cancel(true);
-                      shouldCancel = true;
-                    }
-                  }
-                }
-              }
-
-              clearString();
-
-              if(shouldCancel) {
+              CompletableFuture<Void> all = CompletableFuture.allOf(futures);
+              try {
+                all.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                all.cancel(true);
+                clearString();
                 System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
                 System.out.println("This may be due to your internet connection being slow, or");
                 System.out.println("the Hypixel API may be responding slowly.");
                 return;
               }
+
+              clearString();
 
               Main.printDebug(binPrices.size() + " total BINs processed!");
 
