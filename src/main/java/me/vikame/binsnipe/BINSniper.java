@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
@@ -70,6 +71,7 @@ class BINSniper {
 
   // Iterative task for copying flips to the clipboard.
   private CompletableFuture<Void> iterativeTask;
+  private final AtomicBoolean doingIterativeCopy;
 
   BINSniper() {
     System.out.println("Starting BIN sniper...");
@@ -111,6 +113,8 @@ class BINSniper {
       this.notificationIcon = null;
     }
 
+    doingIterativeCopy = new AtomicBoolean(false);
+
     // Make an API request to get initial data before the sniper starts.
     getAuctions(0);
 
@@ -128,7 +132,9 @@ class BINSniper {
               if (iterativeTask != null && !iterativeTask.isDone()) {
                 cleanupAuctionData();
                 clearString();
+                doingIterativeCopy.set(false);
                 iterativeTask.cancel(true);
+                KeyboardListener.pasteCallback.run(); // HACK: Interrupt the indefinite sleep in the iterative copy task!
                 System.out.println(
                     "Commands were not pasted before we started a new flip attempt.");
               }
@@ -395,6 +401,7 @@ class BINSniper {
               // If we are iterating over results and copying, start the task and only cleanup
               // afterward.
               if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
+                doingIterativeCopy.set(true);
                 iterativeTask =
                     Main.exec(() -> iterateResultsToClipboard(flips))
                         .thenRun(this::cleanupAuctionData);
@@ -477,6 +484,8 @@ class BINSniper {
 
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
+      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
+
       String key = entry.getValue().getLowestKey();
 
       Main.printDebug("Copying auction " + key + "!");
@@ -506,6 +515,8 @@ class BINSniper {
         Thread.sleep(Long.MAX_VALUE);
       } catch (InterruptedException ignored) {
       }
+
+      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
 
       finished++;
     }
