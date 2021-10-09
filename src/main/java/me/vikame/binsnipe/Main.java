@@ -176,6 +176,12 @@ public class Main {
                   () -> {
                     shutdown();
                     sniper.cleanup();
+
+                    try {
+                      GlobalScreen.unregisterNativeHook();
+                    } catch (NativeHookException e) {
+                      e.printStackTrace();
+                    }
                   }));
 
       System.out.println();
