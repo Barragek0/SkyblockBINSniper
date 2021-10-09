@@ -366,16 +366,16 @@ class BINSniper {
                           + price.getLowestKey()
                           + " | Item: "
                           + price.getLowestItemName()
-                          + " | # BIN'd on AH: "
+                          + " | Volume: "
                           + price.getTotalCount()
                           + " | Price: "
                           + formatValue(lowest)
-                          + " | Second lowest: "
+                          + " | Next: "
                           + formatValue(second)
-                          + " | Profit (incl. taxes): "
+                          + " | Profit: "
                           + formatValue(diff)
                           + " (+"
-                          + profitPercentage
+                          + PRINT_FORMAT.format(profitPercentage)
                           + "%) ("
                           + timeTaken
                           + "ms)");
@@ -460,14 +460,14 @@ class BINSniper {
       }
 
       notificationIcon.displayMessage(
-          best.getLowestItemName() + " (# on AH: " + best.getTotalCount() + ")",
+          best.getLowestItemName() + " (Volume: " + best.getTotalCount() + ")",
           "Price: "
               + NumberFormat.getInstance().format(best.getLowestValue())
               + "\n"
-              + "Second Lowest: "
+              + "Next: "
               + NumberFormat.getInstance().format(best.getSecondLowestValue())
               + "\n"
-              + "Profit (incl. taxes): "
+              + "Profit: "
               + NumberFormat.getInstance().format(best.getProjectedProfit()),
           MessageType.INFO);
 
