@@ -1,6 +1,7 @@
 package me.vikame.binsnipe;
 
 import java.awt.SystemTray;
+import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -110,11 +111,11 @@ public class Config {
 
   /* List of 'partial' item names that are 'blacklisted' and won't be added to the list of flips (uses .toLowerCase().contains(), not equalsIgnoreCase() by default).
    */
-  static List<String> BLACKLIST = new LinkedList<>();
+  static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap"));
 
   /* Blacklist names need to match the exact item name.
    */
-  static boolean BLACKLIST_EXACT_MATCH = false;
+  static boolean BLACKLIST_EXACT_MATCH = true;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
