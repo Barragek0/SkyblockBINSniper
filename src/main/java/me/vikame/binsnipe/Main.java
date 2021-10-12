@@ -14,6 +14,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import com.sun.deploy.util.StringUtils;
 import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.PrimitiveHelper;
 import org.jnativehook.GlobalScreen;
@@ -84,9 +86,10 @@ public class Main {
                           || field.getType().equals(int.class)
                           || field.getType().equals(long.class)
                           || field.getType().equals(float.class)
-                          || field.getType().equals(List.class)
                       ? String.valueOf(field.get(Main.class))
-                      : "");
+                      : field.getType().equals(List.class)
+                          ? StringUtils.join(Collections.singleton(field), ",")
+                          : "");
               properties.store(new FileOutputStream(config), null);
             }
             try {
