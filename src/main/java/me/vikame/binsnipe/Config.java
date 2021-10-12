@@ -44,7 +44,7 @@ public class Config {
   static boolean IGNORE_USED_CAKE_SOULS = true;
 
   // Whether to treat all "dungeonizable" items as if they were starless.
-  public static boolean IGNORE_STARS = true;
+  static boolean IGNORE_STARS = true;
 
   // Whether to treat all reforgeable items the same regardless of applied reforge.
   static boolean IGNORE_REFORGES = true;
@@ -101,6 +101,10 @@ public class Config {
    * Much easier than copying each command manually if you want to check more than one result.
    */
   static boolean ITERATE_RESULTS_TO_CLIPBOARD = true;
+
+  /* The minimum volume of items already on the market to consider a flip.
+   */
+  static int MINIMUM_MARKET_VOLUME = 3;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.

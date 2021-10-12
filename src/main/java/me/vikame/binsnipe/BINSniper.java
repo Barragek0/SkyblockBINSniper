@@ -132,7 +132,8 @@ class BINSniper {
                 clearString();
                 doingIterativeCopy.set(false);
                 iterativeTask.cancel(true);
-                KeyboardListener.pasteCallback.run(); // HACK: Interrupt the indefinite sleep in the iterative copy task!
+                KeyboardListener.pasteCallback
+                    .run(); // HACK: Interrupt the indefinite sleep in the iterative copy task!
                 System.out.println(
                     "Commands were not pasted before we started a new flip attempt.");
               }
@@ -262,12 +263,18 @@ class BINSniper {
 
                               long pageEnd = System.currentTimeMillis();
 
-                              Main.printDebug("Parsed page " + workingPage + " in " + (pageEnd - pageStart) + "ms.");
+                              Main.printDebug(
+                                  "Parsed page "
+                                      + workingPage
+                                      + " in "
+                                      + (pageEnd - pageStart)
+                                      + "ms.");
                             }
                           }
                         });
 
-                futures[workingPage] = future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
+                futures[workingPage] =
+                    future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
               }
 
               CompletableFuture<Void> all = CompletableFuture.allOf(futures);
@@ -315,7 +322,8 @@ class BINSniper {
                             + "' ("
                             + entry.getValue().getLowestItemName()
                             + ")");
-                    if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
+                    if (flips.size() < Config.MAX_FLIPS_TO_SHOW
+                        && Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount()) {
                       flips.add(entry);
                     } else {
                       Map.Entry<String, AtomicPrice> first = flips.first();
@@ -471,7 +479,8 @@ class BINSniper {
 
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
-      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get())
+        return; // Exit early if we have been told to stop doing the iterative copy.
 
       String key = entry.getValue().getLowestKey();
 
@@ -503,7 +512,8 @@ class BINSniper {
       } catch (InterruptedException ignored) {
       }
 
-      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get())
+        return; // Exit early if we have been told to stop doing the iterative copy.
 
       finished++;
     }
