@@ -368,8 +368,9 @@ class BINSniper {
                               IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
                         } catch (IOException e) {
+                          done.set(true);
                           System.err.println("Error connecting to NEU API");
-                          e.printStackTrace();
+                          return;
                         }
 
                         json = gson.fromJson(response, JsonObject.class);
