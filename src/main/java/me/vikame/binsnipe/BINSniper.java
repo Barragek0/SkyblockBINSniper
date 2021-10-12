@@ -328,10 +328,11 @@ class BINSniper {
                       if (Config.BLACKLIST_EXACT_MATCH
                           ? price.getLowestItemName().equalsIgnoreCase(blacklistItem)
                           : price.getLowestItemName().toLowerCase().contains(blacklistItem)) {
+                        Main.printDebug(price.getLowestItemName() + " is blacklisted.");
                         itemOnBlacklist = true;
                       }
                     }
-                    if (Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount() && !itemOnBlacklist) {
+                    if (Config.MINIMUM_MARKET_VOLUME <= price.getTotalCount() && !itemOnBlacklist) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
@@ -343,6 +344,14 @@ class BINSniper {
                           flips.add(entry);
                         }
                       }
+                    } else {
+                      Main.printDebug(
+                          price.getLowestItemName()
+                              + " is blacklisted or doesn't meet required minimum market volume ("
+                              + Config.MINIMUM_MARKET_VOLUME
+                              + " <= "
+                              + price.getTotalCount()
+                              + ").");
                     }
                   }
                 }
