@@ -423,6 +423,7 @@ class BINSniper {
                             + entry.getKey()
                             + " as it has less than the required minimum_daily_sales of "
                             + Config.MINIMUM_DAILY_SALES);
+                    flips.remove(entry);
                     break;
                   }
 
