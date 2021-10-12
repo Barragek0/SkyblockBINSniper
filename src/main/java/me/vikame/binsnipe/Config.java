@@ -111,7 +111,7 @@ public class Config {
 
   /* List of item names that are 'blacklisted' and won't be added to the list of flips.
    */
-  static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap"));
+  static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap", "null"));
 
   /* Blacklist names need to match the exact item name.
    */
