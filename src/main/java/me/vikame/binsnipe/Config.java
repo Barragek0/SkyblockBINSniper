@@ -109,7 +109,7 @@ public class Config {
    */
   static int MINIMUM_MARKET_VOLUME = 3;
 
-  /* List of 'partial' item names that are 'blacklisted' and won't be added to the list of flips (uses .toLowerCase().contains(), not equalsIgnoreCase() by default).
+  /* List of item names that are 'blacklisted' and won't be added to the list of flips.
    */
   static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap"));
 
