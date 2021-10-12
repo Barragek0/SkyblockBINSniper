@@ -105,10 +105,6 @@ public class Config {
    */
   static boolean ITERATE_RESULTS_TO_CLIPBOARD = true;
 
-  /* The minimum volume of items already on the market to consider a flip.
-   */
-  static int MINIMUM_MARKET_VOLUME = 3;
-
   /* List of item names that are 'blacklisted' and won't be added to the list of flips.
    */
   static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap", "null"));

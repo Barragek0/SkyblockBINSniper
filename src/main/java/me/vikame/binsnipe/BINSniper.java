@@ -334,7 +334,7 @@ class BINSniper {
                         itemOnBlacklist = true;
                       }
                     }
-                    if (Config.MINIMUM_MARKET_VOLUME <= price.getTotalCount() && !itemOnBlacklist) {
+                    if (!itemOnBlacklist) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
@@ -346,14 +346,6 @@ class BINSniper {
                           flips.add(entry);
                         }
                       }
-                    } else {
-                      Main.printDebug(
-                          price.getLowestItemName()
-                              + " is blacklisted or doesn't meet required minimum market volume ("
-                              + Config.MINIMUM_MARKET_VOLUME
-                              + " <= "
-                              + price.getTotalCount()
-                              + ").");
                     }
                   }
                 }
