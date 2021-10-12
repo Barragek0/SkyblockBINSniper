@@ -381,15 +381,17 @@ class BINSniper {
                         }
 
                         for (Map.Entry<String, AtomicPrice> entry : flips) {
-                          JsonObject mainObject = json.get(entry.getKey()).getAsJsonObject();
-                          if (mainObject != null) {
-                            if (mainObject.get("sales") != null) {
-                              daily_volumes.add(
-                                  new Item(entry.getKey(), mainObject.get("sales").getAsInt()));
-                            } else if (mainObject.get("clean_sales") != null) {
-                              daily_volumes.add(
-                                  new Item(
-                                      entry.getKey(), mainObject.get("clean_sales").getAsInt()));
+                          if (json.get(entry.getKey()) != null) {
+                            JsonObject mainObject = json.get(entry.getKey()).getAsJsonObject();
+                            if (mainObject != null) {
+                              if (mainObject.get("sales") != null) {
+                                daily_volumes.add(
+                                    new Item(entry.getKey(), mainObject.get("sales").getAsInt()));
+                              } else if (mainObject.get("clean_sales") != null) {
+                                daily_volumes.add(
+                                    new Item(
+                                        entry.getKey(), mainObject.get("clean_sales").getAsInt()));
+                              }
                             }
                           }
                         }
