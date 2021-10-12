@@ -331,17 +331,17 @@ class BINSniper {
                         itemOnBlacklist = true;
                       }
                     }
-                    if (flips.size() < Config.MAX_FLIPS_TO_SHOW
-                        && Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount()
-                        && !itemOnBlacklist) {
-                      flips.add(entry);
-                    } else {
-                      Map.Entry<String, AtomicPrice> first = flips.first();
-                      AtomicPrice firstPrice = first.getValue();
-
-                      if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
-                        flips.pollFirst();
+                    if (Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount() && !itemOnBlacklist) {
+                      if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
+                      } else {
+                        Map.Entry<String, AtomicPrice> first = flips.first();
+                        AtomicPrice firstPrice = first.getValue();
+
+                        if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
+                          flips.pollFirst();
+                          flips.add(entry);
+                        }
                       }
                     }
                   }
