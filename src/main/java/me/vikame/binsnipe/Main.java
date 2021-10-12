@@ -120,7 +120,7 @@ public class Main {
           }
 
           reader.close();
-        } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
+        } catch (IOException | IllegalAccessException e) {
           e.printStackTrace();
           System.out.println("Failed to read configuration data. Using defaults...");
         }
