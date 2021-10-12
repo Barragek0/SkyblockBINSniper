@@ -419,7 +419,10 @@ class BINSniper {
               if (flips.isEmpty()) {
                 System.out.println("Unable to find a flip after " + timeTaken + " ms.");
               } else {
-                for (Map.Entry<String, AtomicPrice> entry : flips) {
+
+                Iterator<Map.Entry<String, AtomicPrice>> entryIterator = flips.iterator();
+                while (entryIterator.hasNext()) {
+                  Map.Entry<String, AtomicPrice> entry = entryIterator.next();
                   flipsAlreadyShown.add(entry.getKey());
 
                   AtomicPrice price = entry.getValue();
@@ -434,6 +437,10 @@ class BINSniper {
                             + entry.getKey()
                             + " as it has less than the required minimum_daily_sales of "
                             + Config.MINIMUM_DAILY_SALES);
+                    // This section has to be an iterator instead of an enhanced for loop so
+                    // ConcurrentModificationException doesn't get thrown when removing the entry
+                    // from the treeset.
+                    entryIterator.remove();
                     continue;
                   }
 
