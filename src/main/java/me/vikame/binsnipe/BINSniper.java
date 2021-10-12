@@ -355,35 +355,44 @@ class BINSniper {
 
               new Thread(
                       () -> {
+                        JsonObject json = null;
+                        URL url = null;
+                        String response = null;
                         try {
-                          URL url = new URL("https://moulberry.codes/auction_averages/1day.json");
+                          url = new URL("https://moulberry.codes/auction_averages/1day.json");
                           URLConnection connection = url.openConnection();
                           connection.setConnectTimeout(5000);
                           connection.setReadTimeout(5000);
 
-                          String response =
+                          response =
                               IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
-                          JsonObject json = gson.fromJson(response, JsonObject.class);
-                          if (json == null) {
-                            done.set(true);
-                            System.err.println("Invalid JSON");
-                            return;
-                          }
-                          for (Map.Entry<String, AtomicPrice> entry : flips) {
-                            daily_volumes.add(
-                                new Item(
-                                    entry.getKey(),
-                                    json.get(entry.getKey())
-                                        .getAsJsonObject()
-                                        .get("sales")
-                                        .getAsInt()));
-                            done.set(true);
-                          }
-                        } catch (Throwable ignored) {
-                          // if an error occurs it means that item doesn't exist in the API
-                          done.set(true);
+                        } catch (IOException e) {
+                          System.err.println("Error connecting to NEU API");
+                          e.printStackTrace();
                         }
+
+                        json = gson.fromJson(response, JsonObject.class);
+                        if (json == null) {
+                          done.set(true);
+                          System.err.println("Invalid JSON");
+                          return;
+                        }
+
+                        for (Map.Entry<String, AtomicPrice> entry : flips) {
+                          JsonObject mainObject = json.get(entry.getKey()).getAsJsonObject();
+                          if (mainObject != null) {
+                            if (mainObject.get("sales") != null) {
+                              daily_volumes.add(
+                                  new Item(entry.getKey(), mainObject.get("sales").getAsInt()));
+                            } else if (mainObject.get("clean_sales") != null) {
+                              daily_volumes.add(
+                                  new Item(
+                                      entry.getKey(), mainObject.get("clean_sales").getAsInt()));
+                            }
+                          }
+                        }
+                        done.set(true);
                       })
                   .start();
 
