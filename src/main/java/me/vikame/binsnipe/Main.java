@@ -5,6 +5,8 @@ import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -82,7 +84,7 @@ public class Main {
                           || field.getType().equals(int.class)
                           || field.getType().equals(long.class)
                           || field.getType().equals(float.class)
-                          || field.getType().getName().contains("List")
+                          || field.getType().equals(List.class)
                       ? String.valueOf(field.get(Main.class))
                       : "");
               properties.store(new FileOutputStream(config), null);
@@ -99,6 +101,8 @@ public class Main {
                 field.set(null, Float.parseFloat(prop.replace(",", "")));
               } else if (type == Long.class) {
                 field.set(null, Long.parseLong(prop.replace(",", "")));
+              } else if (type == List.class) {
+                field.set(null, Collections.singletonList(prop));
               } else {
                 System.out.println("Could not parse data type for " + field.getName() + ".");
                 continue;
