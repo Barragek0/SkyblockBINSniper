@@ -17,7 +17,6 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import com.sun.deploy.util.StringUtils;
 import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.PrimitiveHelper;
 import org.jnativehook.GlobalScreen;
@@ -89,8 +88,8 @@ public class Main {
                           || field.getType().equals(long.class)
                           || field.getType().equals(float.class)
                       ? String.valueOf(field.get(Main.class))
-                      : field.getType().equals(List.class)
-                          ? StringUtils.join(Collections.singleton(field), ",")
+                      : field.getType().equals(java.util.List.class)
+                          ? String.join(",", (java.util.List) field.get(Main.class))
                           : "");
               properties.store(new FileOutputStream(config), null);
             }
@@ -106,10 +105,15 @@ public class Main {
                 field.set(null, Float.parseFloat(prop.replace(",", "")));
               } else if (type == Long.class) {
                 field.set(null, Long.parseLong(prop.replace(",", "")));
-              } else if (type == List.class) {
+              } else if (type == java.util.List.class) {
                 field.set(null, Stream.of(prop.split(",", -1)).collect(Collectors.toList()));
               } else {
-                System.out.println("Could not parse data type for " + field.getName() + ".");
+                System.out.println(
+                    "Could not parse data type for "
+                        + field.getName()
+                        + " with type "
+                        + field.getType()
+                        + ".");
                 continue;
               }
 
