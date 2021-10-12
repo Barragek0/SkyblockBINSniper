@@ -354,34 +354,38 @@ class BINSniper {
               AtomicBoolean done = new AtomicBoolean(false);
 
               new Thread(
-                  () -> {
-                    try {
-                      for (Map.Entry<String, AtomicPrice> entry : flips) {
-                        URL url = new URL("https://moulberry.codes/auction_averages/1day.json");
-                        URLConnection connection = url.openConnection();
-                        connection.setConnectTimeout(10000);
-                        connection.setReadTimeout(10000);
+                      () -> {
+                        try {
+                          URL url = new URL("https://moulberry.codes/auction_averages/1day.json");
+                          URLConnection connection = url.openConnection();
+                          connection.setConnectTimeout(5000);
+                          connection.setReadTimeout(5000);
 
-                        String response =
-                            IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+                          String response =
+                              IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
-                        JsonObject json = gson.fromJson(response, JsonObject.class);
-                        if (json == null) throw new ConnectException("Invalid JSON");
-
-                        daily_volumes.add(
-                            new Item(
-                                entry.getKey(),
-                                json.get(entry.getKey())
-                                    .getAsJsonObject()
-                                    .get("sales")
-                                    .getAsInt()));
-                        done.set(true);
-                      }
-                    } catch (Throwable e) {
-                      e.printStackTrace();
-                      done.set(true);
-                    }
-                  });
+                          JsonObject json = gson.fromJson(response, JsonObject.class);
+                          if (json == null) {
+                            done.set(true);
+                            System.err.println("Invalid JSON");
+                            return;
+                          }
+                          for (Map.Entry<String, AtomicPrice> entry : flips) {
+                            daily_volumes.add(
+                                new Item(
+                                    entry.getKey(),
+                                    json.get(entry.getKey())
+                                        .getAsJsonObject()
+                                        .get("sales")
+                                        .getAsInt()));
+                            done.set(true);
+                          }
+                        } catch (Throwable ignored) {
+                          // if an error occurs it means that item doesn't exist in the API
+                          done.set(true);
+                        }
+                      })
+                  .start();
 
               while (!done.get()) {
                 try {
@@ -403,7 +407,14 @@ class BINSniper {
                       .anyMatch(
                           o ->
                               o.getKey().equals(entry.getKey())
-                                  && o.getSales() < Config.MINIMUM_DAILY_SALES)) break;
+                                  && o.getSales() < Config.MINIMUM_DAILY_SALES)) {
+                    System.out.println(
+                        "Skipping "
+                            + entry.getKey()
+                            + " as it has less than the required minimum_daily_sales of "
+                            + Config.MINIMUM_DAILY_SALES);
+                    break;
+                  }
 
                   int lowest = price.getLowestValue();
                   int second = price.getSecondLowestValue();
@@ -500,6 +511,8 @@ class BINSniper {
     if (Config.EXPLICIT_GC_AFTER_FLIP) {
       System.gc();
     }
+
+    daily_volumes.clear();
   }
 
   private void sendNotification(AtomicPrice best) {
