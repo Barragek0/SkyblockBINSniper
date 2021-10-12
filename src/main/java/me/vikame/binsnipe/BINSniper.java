@@ -7,19 +7,12 @@ import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.io.*;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Comparator;
-import java.util.Locale;
-import java.util.Map;
-import java.util.TreeSet;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -30,6 +23,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import javax.imageio.ImageIO;
+
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import jdk.nashorn.internal.objects.annotations.Getter;
+import jdk.nashorn.internal.objects.annotations.Setter;
+import lombok.Data;
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
@@ -40,6 +39,7 @@ import me.vikame.binsnipe.util.ExpiringSet;
 import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.SBHelper;
 import me.vikame.binsnipe.util.UnboundedObjectPool;
+import org.apache.commons.io.IOUtils;
 
 class BINSniper {
 
@@ -47,6 +47,8 @@ class BINSniper {
 
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
+
+  private final Gson gson = new Gson();
 
   // Important information required by the BIN sniper.
   private final AtomicInteger totalPages;
@@ -71,6 +73,8 @@ class BINSniper {
   // Iterative task for copying flips to the clipboard.
   private CompletableFuture<Void> iterativeTask;
   private final AtomicBoolean doingIterativeCopy;
+
+  private List<Item> daily_volumes = new LinkedList<Item>();
 
   BINSniper() {
     System.out.println("Starting BIN sniper...");
@@ -355,6 +359,45 @@ class BINSniper {
                 }
               }
 
+              AtomicBoolean done = new AtomicBoolean(false);
+
+              new Thread(
+                  () -> {
+                    try {
+                      for (Map.Entry<String, AtomicPrice> entry : flips) {
+                        URL url = new URL("https://moulberry.codes/auction_averages/1day.json");
+                        URLConnection connection = url.openConnection();
+                        connection.setConnectTimeout(10000);
+                        connection.setReadTimeout(10000);
+
+                        String response =
+                            IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
+
+                        JsonObject json = gson.fromJson(response, JsonObject.class);
+                        if (json == null) throw new ConnectException("Invalid JSON");
+
+                        daily_volumes.add(
+                            new Item(
+                                entry.getKey(),
+                                json.get(entry.getKey())
+                                    .getAsJsonObject()
+                                    .get("sales")
+                                    .getAsInt()));
+                        done.set(true);
+                      }
+                    } catch (Throwable e) {
+                      e.printStackTrace();
+                      done.set(true);
+                    }
+                  });
+
+              while (!done.get()) {
+                try {
+                  Thread.sleep(500);
+                } catch (InterruptedException ignored) {
+                }
+              }
+
               long timeTaken = System.currentTimeMillis() - start;
               if (flips.isEmpty()) {
                 System.out.println("Unable to find a flip after " + timeTaken + " ms.");
@@ -363,6 +406,12 @@ class BINSniper {
                   flipsAlreadyShown.add(entry.getKey());
 
                   AtomicPrice price = entry.getValue();
+
+                  if (daily_volumes.stream()
+                      .anyMatch(
+                          o ->
+                              o.getKey().equals(entry.getKey())
+                                  && o.getSales() < Config.MINIMUM_DAILY_SALES)) break;
 
                   int lowest = price.getLowestValue();
                   int second = price.getSecondLowestValue();
@@ -718,6 +767,18 @@ class BINSniper {
   void cleanup() {
     if (SystemTray.isSupported() && notificationIcon != null) {
       SystemTray.getSystemTray().remove(notificationIcon);
+    }
+  }
+
+  @Data
+  private class Item {
+
+    private String key;
+    private int sales;
+
+    private Item(String key, int sales) {
+      this.key = key;
+      this.sales = sales;
     }
   }
 }

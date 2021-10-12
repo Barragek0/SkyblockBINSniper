@@ -117,6 +117,10 @@ public class Config {
    */
   static boolean BLACKLIST_EXACT_MATCH = true;
 
+  /* The minimum amount of sales the item needs to have per day to be considered as a flip. (Using NotEnoughUpdates API)
+   */
+  static int MINIMUM_DAILY_SALES = 5;
+
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
   static transient int LOADING_BAR_SEGMENTS = 40;
