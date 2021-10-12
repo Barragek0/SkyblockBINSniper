@@ -1,11 +1,7 @@
 package me.vikame.binsnipe;
 
-import java.awt.GraphicsEnvironment;
-import java.io.Console;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import java.awt.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
@@ -80,9 +76,17 @@ public class Main {
 
           for (Field field : Config.class.getDeclaredFields()) {
             if (!properties.containsKey(field.getName())) {
-              continue;
+              properties.setProperty(
+                  field.getName(),
+                  field.getType().equals(boolean.class)
+                          || field.getType().equals(int.class)
+                          || field.getType().equals(long.class)
+                          || field.getType().equals(float.class)
+                          || field.getType().getName().contains("List")
+                      ? String.valueOf(field.get(Main.class))
+                      : "");
+              properties.store(new FileOutputStream(config), null);
             }
-
             try {
               String prop = properties.getProperty(field.getName());
 
@@ -112,7 +116,7 @@ public class Main {
           }
 
           reader.close();
-        } catch (IOException e) {
+        } catch (IOException | IllegalAccessException | NoSuchFieldException e) {
           e.printStackTrace();
           System.out.println("Failed to read configuration data. Using defaults...");
         }

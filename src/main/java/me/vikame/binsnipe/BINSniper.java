@@ -17,6 +17,7 @@ import java.net.URL;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
@@ -322,8 +323,17 @@ class BINSniper {
                             + "' ("
                             + entry.getValue().getLowestItemName()
                             + ")");
+                    boolean itemOnBlacklist = false;
+                    for (String blacklistItem : Config.BLACKLIST) {
+                      if (Config.BLACKLIST_EXACT_MATCH
+                          ? price.getLowestItemName().equalsIgnoreCase(blacklistItem)
+                          : price.getLowestItemName().toLowerCase().contains(blacklistItem)) {
+                        itemOnBlacklist = true;
+                      }
+                    }
                     if (flips.size() < Config.MAX_FLIPS_TO_SHOW
-                        && Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount()) {
+                        && Config.MINIMUM_MARKET_VOLUME >= price.getTotalCount()
+                        && !itemOnBlacklist) {
                       flips.add(entry);
                     } else {
                       Map.Entry<String, AtomicPrice> first = flips.first();

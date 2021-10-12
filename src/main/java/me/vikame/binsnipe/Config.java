@@ -1,6 +1,8 @@
 package me.vikame.binsnipe;
 
 import java.awt.SystemTray;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Config {
 
@@ -105,6 +107,14 @@ public class Config {
   /* The minimum volume of items already on the market to consider a flip.
    */
   static int MINIMUM_MARKET_VOLUME = 3;
+
+  /* List of 'partial' item names that are 'blacklisted' and won't be added to the list of flips (uses .toLowerCase().contains(), not equalsIgnoreCase() by default).
+   */
+  static List<String> BLACKLIST = new LinkedList<>();
+
+  /* Blacklist names need to match the exact item name.
+   */
+  static boolean BLACKLIST_EXACT_MATCH = false;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
