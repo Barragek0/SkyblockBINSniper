@@ -14,6 +14,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.sun.deploy.util.StringUtils;
 import me.vikame.binsnipe.util.KeyboardListener;
@@ -105,7 +107,7 @@ public class Main {
               } else if (type == Long.class) {
                 field.set(null, Long.parseLong(prop.replace(",", "")));
               } else if (type == List.class) {
-                field.set(null, Collections.singletonList(prop));
+                field.set(null, Stream.of(prop.split(",", -1)).collect(Collectors.toList()));
               } else {
                 System.out.println("Could not parse data type for " + field.getName() + ".");
                 continue;
