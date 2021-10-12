@@ -137,8 +137,8 @@ class BINSniper {
                 clearString();
                 doingIterativeCopy.set(false);
                 iterativeTask.cancel(true);
-                KeyboardListener.pasteCallback
-                    .run(); // HACK: Interrupt the indefinite sleep in the iterative copy task!
+                // HACK: Interrupt the indefinite sleep in the iterative copy task!
+                KeyboardListener.pasteCallback.run();
                 System.out.println(
                     "Commands were not pasted before we started a new flip attempt.");
               }
@@ -334,6 +334,7 @@ class BINSniper {
                         itemOnBlacklist = true;
                       }
                     }
+
                     if (!itemOnBlacklist) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
@@ -351,9 +352,8 @@ class BINSniper {
                 }
               }
 
-              AtomicBoolean done = new AtomicBoolean(false);
-
-              new Thread(
+              CompletableFuture<Void> NotEnoughUpdatesFuture =
+                  Main.exec(
                       () -> {
                         JsonObject json = null;
                         URL url = null;
@@ -368,15 +368,13 @@ class BINSniper {
                               IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
 
                         } catch (IOException e) {
-                          done.set(true);
                           System.err.println("Error connecting to NEU API");
                           return;
                         }
 
                         json = gson.fromJson(response, JsonObject.class);
                         if (json == null) {
-                          done.set(true);
-                          System.err.println("Invalid JSON");
+                          System.err.println("Invalid NEU API JSON");
                           return;
                         }
 
@@ -395,15 +393,26 @@ class BINSniper {
                             }
                           }
                         }
-                        done.set(true);
-                      })
-                  .start();
+                      });
 
-              while (!done.get()) {
-                try {
-                  Thread.sleep(500);
-                } catch (InterruptedException ignored) {
-                }
+              try {
+                NotEnoughUpdatesFuture.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                NotEnoughUpdatesFuture.cancel(true);
+                clearString();
+                System.out.println("Could not retrieve data from NEU API.");
+                return;
+              }
+
+              try {
+                all.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                all.cancel(true);
+                clearString();
+                System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
+                System.out.println("This may be due to your internet connection being slow, or");
+                System.out.println("the Hypixel API may be responding slowly.");
+                return;
               }
 
               long timeTaken = System.currentTimeMillis() - start;
@@ -425,8 +434,7 @@ class BINSniper {
                             + entry.getKey()
                             + " as it has less than the required minimum_daily_sales of "
                             + Config.MINIMUM_DAILY_SALES);
-                    flips.remove(entry);
-                    break;
+                    continue;
                   }
 
                   int lowest = price.getLowestValue();
