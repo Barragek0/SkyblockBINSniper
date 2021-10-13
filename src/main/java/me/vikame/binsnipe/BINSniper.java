@@ -68,7 +68,7 @@ class BINSniper {
   private final AtomicBoolean doingIterativeCopy;
 
   // Holds item data from NotEnoughUpdates API
-  private List<Item> daily_volumes = new LinkedList<Item>();
+  private HashMap<String, Integer> daily_volumes = new HashMap<>();
 
   BINSniper() {
     System.out.println("Starting BIN sniper...");
@@ -359,11 +359,10 @@ class BINSniper {
                         for (Map.Entry<String, AtomicPrice> entry : flips) {
                           try {
                             if (neuObject.get("sales") != null)
-                              daily_volumes.add(
-                                  new Item(entry.getKey(), (Integer) neuObject.get("sales")));
+                              daily_volumes.put(entry.getKey(), (Integer) neuObject.get("sales"));
                             else if (neuObject.get("clean_sales") != null)
-                              daily_volumes.add(
-                                  new Item(entry.getKey(), (Integer) neuObject.get("clean_sales")));
+                              daily_volumes.put(
+                                  entry.getKey(), (Integer) neuObject.get("clean_sales"));
                           } catch (Throwable ignored) {
                           }
                         }
