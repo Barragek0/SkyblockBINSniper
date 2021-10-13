@@ -101,6 +101,7 @@ class BINSniper {
       } catch (AssertionError | IOException e) {
         image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         System.err.println("Failed to find icon! Defaulting to blank icon...");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
       }
 
       notificationIcon = new TrayIcon(image, "BIN Sniper");
@@ -243,7 +244,7 @@ class BINSniper {
                                     itemName.append(" [").append(skin).append("]");
                                   }
                                 } catch (Exception e) {
-                                  e.printStackTrace();
+                                  if (Config.OUTPUT_ERRORS) e.printStackTrace();
                                   continue;
                                 }
 
@@ -285,6 +286,7 @@ class BINSniper {
                 System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
                 System.out.println("This may be due to your internet connection being slow, or");
                 System.out.println("the Hypixel API may be responding slowly.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
                 return;
               }
 
@@ -399,6 +401,7 @@ class BINSniper {
                 NotEnoughUpdatesFuture.cancel(true);
                 clearString();
                 System.out.println("Could not retrieve data from NEU API.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
                 return;
               }
 
@@ -410,6 +413,7 @@ class BINSniper {
                 System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
                 System.out.println("This may be due to your internet connection being slow, or");
                 System.out.println("the Hypixel API may be responding slowly.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
                 return;
               }
 
@@ -551,6 +555,7 @@ class BINSniper {
       } catch (AWTException e) {
         e.printStackTrace();
         System.err.println("Failed to initialize notification system.");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
       }
 
       notificationIcon.displayMessage(
@@ -646,8 +651,8 @@ class BINSniper {
     try {
       apiURL = new URL(url);
     } catch (MalformedURLException e) {
-      e.printStackTrace();
       System.err.println("Malformed URL '" + url + "'");
+      if (Config.OUTPUT_ERRORS) e.printStackTrace();
       System.exit(1);
       return null;
     }
@@ -673,11 +678,11 @@ class BINSniper {
       try {
         connection.connect();
       } catch (IOException e) {
-        e.printStackTrace();
         System.err.println("Failed to connect to " + url + ": " + e.getMessage());
         System.err.println("This may be due to your firewall, or anti-virus software.");
         System.err.println(
             "Please ensure that the Java Virtual Machine is able to access the internet.");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
         return null;
       }
 
@@ -735,7 +740,7 @@ class BINSniper {
       }
 
     } catch (IOException e) {
-      e.printStackTrace();
+      if (Config.OUTPUT_ERRORS) e.printStackTrace();
       System.exit(1);
     }
     return null;
