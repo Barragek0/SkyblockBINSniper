@@ -24,12 +24,11 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import javax.imageio.ImageIO;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonObject;
 import jdk.nashorn.internal.objects.annotations.Getter;
 import jdk.nashorn.internal.objects.annotations.Setter;
 import lombok.Data;
 import me.doubledutch.lazyjson.LazyArray;
+import me.doubledutch.lazyjson.LazyElement;
 import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
 import me.nullicorn.nedit.type.NBTCompound;
@@ -47,8 +46,6 @@ class BINSniper {
 
   // An object used for synchronization during loading bar printing.
   private final Object lock = new Object();
-
-  private final Gson gson = new Gson();
 
   // Important information required by the BIN sniper.
   private final AtomicInteger totalPages;
@@ -74,6 +71,7 @@ class BINSniper {
   private CompletableFuture<Void> iterativeTask;
   private final AtomicBoolean doingIterativeCopy;
 
+  // Holds item data from NotEnoughUpdates API
   private List<Item> daily_volumes = new LinkedList<Item>();
 
   BINSniper() {
@@ -119,13 +117,13 @@ class BINSniper {
     doingIterativeCopy = new AtomicBoolean(false);
 
     // Make an API request to get initial data before the sniper starts.
-    getAuctions(0);
+    getResultsFromEndpoint(Constants.AUCTIONS_ENDPOINT, 0);
 
     Main.schedule(
         () -> {
           long lastUpdateTime = timeLastUpdated.get();
           if ((System.currentTimeMillis() - lastUpdateTime) > 60000) {
-            getAuctions(0);
+            getResultsFromEndpoint(Constants.AUCTIONS_ENDPOINT, 0);
             long newUpdateTime = timeLastUpdated.get();
             long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
@@ -160,7 +158,10 @@ class BINSniper {
                         () -> {
                           // Ensure that this is still a valid page we need to look at.
                           if (workingPage < totalPages.get()) {
-                            LazyArray auctionArray = getAuctions(workingPage);
+                            LazyArray auctionArray =
+                                (LazyArray)
+                                    getResultsFromEndpoint(
+                                        Constants.AUCTIONS_ENDPOINT, workingPage);
 
                             if (auctionArray != null) {
                               long pageStart = System.currentTimeMillis();
@@ -355,42 +356,19 @@ class BINSniper {
               CompletableFuture<Void> NotEnoughUpdatesFuture =
                   Main.exec(
                       () -> {
-                        JsonObject json = null;
-                        URL url = null;
-                        String response = null;
-                        try {
-                          url = new URL("https://moulberry.codes/auction_averages/1day.json");
-                          URLConnection connection = url.openConnection();
-                          connection.setConnectTimeout(5000);
-                          connection.setReadTimeout(5000);
-
-                          response =
-                              IOUtils.toString(connection.getInputStream(), StandardCharsets.UTF_8);
-
-                        } catch (IOException e) {
-                          System.err.println("Error connecting to NEU API");
-                          return;
-                        }
-
-                        json = gson.fromJson(response, JsonObject.class);
-                        if (json == null) {
-                          System.err.println("Invalid NEU API JSON");
-                          return;
-                        }
+                        LazyObject neuObject =
+                            (LazyObject)
+                                getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0);
 
                         for (Map.Entry<String, AtomicPrice> entry : flips) {
-                          if (json.get(entry.getKey()) != null) {
-                            JsonObject mainObject = json.get(entry.getKey()).getAsJsonObject();
-                            if (mainObject != null) {
-                              if (mainObject.get("sales") != null) {
-                                daily_volumes.add(
-                                    new Item(entry.getKey(), mainObject.get("sales").getAsInt()));
-                              } else if (mainObject.get("clean_sales") != null) {
-                                daily_volumes.add(
-                                    new Item(
-                                        entry.getKey(), mainObject.get("clean_sales").getAsInt()));
-                              }
-                            }
+                          try {
+                            if (neuObject.get("sales") != null)
+                              daily_volumes.add(
+                                  new Item(entry.getKey(), (Integer) neuObject.get("sales")));
+                            else if (neuObject.get("clean_sales") != null)
+                              daily_volumes.add(
+                                  new Item(entry.getKey(), (Integer) neuObject.get("clean_sales")));
+                          } catch (Throwable ignored) {
                           }
                         }
                       });
@@ -636,18 +614,18 @@ class BINSniper {
     return objectPool != null ? objectPool.borrow() : new AtomicPrice();
   }
 
-  private LazyArray getAuctions(int page) {
-    String targetURL =
-        Constants.AUCTIONS_ENDPOINT
+  private LazyElement getResultsFromEndpoint(String url, int page) {
+    url =
+        url
             + "?page="
             + page
             + (Config.FORCE_NO_CACHE_API_REQUESTS ? "&_=" + System.currentTimeMillis() : "");
     URL apiURL;
     try {
-      apiURL = new URL(targetURL);
+      apiURL = new URL(url);
     } catch (MalformedURLException e) {
       e.printStackTrace();
-      System.err.println("Malformed URL '" + targetURL + "'");
+      System.err.println("Malformed URL '" + url + "'");
       System.exit(1);
       return null;
     }
@@ -674,7 +652,7 @@ class BINSniper {
         connection.connect();
       } catch (IOException e) {
         e.printStackTrace();
-        System.err.println("Failed to connect to " + targetURL + ": " + e.getMessage());
+        System.err.println("Failed to connect to " + url + ": " + e.getMessage());
         System.err.println("This may be due to your firewall, or anti-virus software.");
         System.err.println(
             "Please ensure that the Java Virtual Machine is able to access the internet.");
@@ -708,24 +686,36 @@ class BINSniper {
       connection.disconnect();
 
       LazyObject responseJsonObject = new LazyObject(response.toString());
-      if (!responseJsonObject.getBoolean("success")) {
+      if (url.equalsIgnoreCase(Constants.AUCTIONS_ENDPOINT)
+          && !responseJsonObject.getBoolean("success")) {
         return null;
       }
 
-      long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
+      String formattedUrl = url;
+      if (url.contains("?page="))
+        formattedUrl = formattedUrl.substring(0, formattedUrl.indexOf("?"));
 
-      if (timeLastUpdated > this.timeLastUpdated.get()) {
-        this.timeLastUpdated.set(timeLastUpdated);
-        this.totalPages.set(responseJsonObject.getInt("totalPages"));
-        this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
+      switch (formattedUrl) {
+        case Constants.AUCTIONS_ENDPOINT:
+          long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
+
+          if (timeLastUpdated > this.timeLastUpdated.get()) {
+            this.timeLastUpdated.set(timeLastUpdated);
+            this.totalPages.set(responseJsonObject.getInt("totalPages"));
+            this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
+          }
+
+          return responseJsonObject.getJSONArray("auctions");
+        case Constants.NOTENOUGHUPDATES_ENDPOINT:
+          return responseJsonObject;
+        default:
+          throw new IOException("Unknown endpoint: " + url);
       }
 
-      return responseJsonObject.getJSONArray("auctions");
     } catch (IOException e) {
       e.printStackTrace();
       System.exit(1);
     }
-
     return null;
   }
 
