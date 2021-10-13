@@ -329,6 +329,7 @@ class BINSniper {
                         price
                             .getLowestItemName()
                             .replace(" [COMMON]", "")
+                            .replace(" [UNCOMMON]", "")
                             .replace(" [RARE]", "")
                             .replace(" [EPIC]", "")
                             .replace(" [LEGENDARY]", "")
