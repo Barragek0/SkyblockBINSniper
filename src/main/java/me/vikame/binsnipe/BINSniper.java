@@ -67,7 +67,7 @@ class BINSniper {
   private final AtomicBoolean doingIterativeCopy;
 
   // Holds item data from NotEnoughUpdates API
-  private HashMap<String, Integer> daily_volumes = new HashMap<>();
+  private HashMap<String, Long> daily_volumes = new HashMap<>();
 
   BINSniper() {
     System.out.println("Starting BIN sniper...");
@@ -370,12 +370,25 @@ class BINSniper {
 
                         for (Map.Entry<String, AtomicPrice> entry : flips) {
                           try {
-                            if (neuObject.get("sales") != null)
-                              daily_volumes.put(entry.getKey(), (Integer) neuObject.get("sales"));
-                            else if (neuObject.get("clean_sales") != null)
-                              daily_volumes.put(
-                                  entry.getKey(), (Integer) neuObject.get("clean_sales"));
-                          } catch (Throwable ignored) {
+                            LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
+                            if (itemObject != null) {
+                              if (itemObject.get("sales") != null)
+                                daily_volumes.put(entry.getKey(), (Long) itemObject.get("sales"));
+                              else if (itemObject.get("clean_sales") != null)
+                                daily_volumes.put(
+                                    entry.getKey(), (Long) itemObject.get("clean_sales"));
+                              else
+                                Main.printDebug(
+                                    "Couldn't find AH Sales for "
+                                        + entry.getKey()
+                                        + " in NEU API JSON");
+                            }
+                          } catch (Throwable e) {
+                            Main.printDebug(
+                                "Error parsing JSON for entry "
+                                    + entry.getKey()
+                                    + " from NEU API:");
+                            if (Config.OUTPUT_ERRORS) e.printStackTrace();
                           }
                         }
                       });

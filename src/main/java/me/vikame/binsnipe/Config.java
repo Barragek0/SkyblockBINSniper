@@ -7,6 +7,9 @@ import java.util.List;
 
 public class Config {
 
+  // Whether to output errors to the console or not
+  static boolean OUTPUT_ERRORS = false;
+
   // The number of threads to use for making API requests, and parsing auction data, when finding
   // flips.
   static int POOLED_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
