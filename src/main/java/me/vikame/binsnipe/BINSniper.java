@@ -400,11 +400,11 @@ class BINSniper {
 
                   AtomicPrice price = entry.getValue();
 
-                  if (daily_volumes.stream()
+                  if (daily_volumes.entrySet().stream()
                       .anyMatch(
                           o ->
                               o.getKey().equals(entry.getKey())
-                                  && o.getSales() < Config.MINIMUM_DAILY_SALES)) {
+                                  && o.getValue() < Config.MINIMUM_DAILY_SALES)) {
                     System.out.println(
                         "Skipping "
                             + entry.getKey()
