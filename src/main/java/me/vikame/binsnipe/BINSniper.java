@@ -443,6 +443,17 @@ class BINSniper {
                     // ConcurrentModificationException doesn't get thrown when removing the entry
                     // from the treeset.
                     entryIterator.remove();
+                    if (flips.size() <= 1) {
+                      if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
+                        doingIterativeCopy.set(true);
+                        iterativeTask =
+                            Main.exec(() -> iterateResultsToClipboard(flips))
+                                .thenRun(this::cleanupAuctionData);
+                      } else {
+                        cleanupAuctionData();
+                      }
+                      return;
+                    }
                     continue;
                   } else {
                     Main.printDebug("Not skipping " + entry.getKey());
