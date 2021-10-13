@@ -326,6 +326,11 @@ class BINSniper {
                     String filteredName =
                         price
                             .getLowestItemName()
+                            .replace(" [COMMON]", "")
+                            .replace(" [RARE]", "")
+                            .replace(" [EPIC]", "")
+                            .replace(" [LEGENDARY]", "")
+                            .replace(" [SPECIAL]", "")
                             .replace("✪", "*")
                             .replace(" ✦", " +")
                             .replace("⚚", "Fragged");
@@ -335,6 +340,7 @@ class BINSniper {
                           : filteredName.toLowerCase().contains(blacklistItem)) {
                         Main.printDebug(price.getLowestItemName() + " is blacklisted.");
                         itemOnBlacklist = true;
+                        break;
                       }
                     }
 
@@ -406,6 +412,7 @@ class BINSniper {
 
                   AtomicPrice price = entry.getValue();
 
+                  // One of the commits broke this, figure out why
                   if (daily_volumes.entrySet().stream()
                       .anyMatch(
                           o ->
@@ -421,6 +428,8 @@ class BINSniper {
                     // from the treeset.
                     entryIterator.remove();
                     continue;
+                  } else {
+                    Main.printDebug("Not skipping " + entry.getKey());
                   }
 
                   int lowest = price.getLowestValue();
@@ -515,11 +524,11 @@ class BINSniper {
     binPrices.clear();
     totalBins.lazySet(0);
 
+    daily_volumes.clear();
+
     if (Config.EXPLICIT_GC_AFTER_FLIP) {
       System.gc();
     }
-
-    daily_volumes.clear();
   }
 
   private void sendNotification(AtomicPrice best) {
