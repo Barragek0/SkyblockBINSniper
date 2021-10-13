@@ -23,7 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import javax.imageio.ImageIO;
 
-import lombok.Data;
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyElement;
 import me.doubledutch.lazyjson.LazyObject;
@@ -785,18 +784,6 @@ class BINSniper {
   void cleanup() {
     if (SystemTray.isSupported() && notificationIcon != null) {
       SystemTray.getSystemTray().remove(notificationIcon);
-    }
-  }
-
-  @Data
-  private class Item {
-
-    private String key;
-    private int sales;
-
-    private Item(String key, int sales) {
-      this.key = key;
-      this.sales = sales;
     }
   }
 }
