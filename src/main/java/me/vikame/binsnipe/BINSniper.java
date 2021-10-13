@@ -9,7 +9,6 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.*;
-import java.nio.charset.StandardCharsets;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.*;
@@ -24,8 +23,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
 import javax.imageio.ImageIO;
 
-import jdk.nashorn.internal.objects.annotations.Getter;
-import jdk.nashorn.internal.objects.annotations.Setter;
 import lombok.Data;
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyElement;
@@ -38,7 +35,6 @@ import me.vikame.binsnipe.util.ExpiringSet;
 import me.vikame.binsnipe.util.KeyboardListener;
 import me.vikame.binsnipe.util.SBHelper;
 import me.vikame.binsnipe.util.UnboundedObjectPool;
-import org.apache.commons.io.IOUtils;
 
 class BINSniper {
 
