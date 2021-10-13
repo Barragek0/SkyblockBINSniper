@@ -322,10 +322,17 @@ class BINSniper {
                             + entry.getValue().getLowestItemName()
                             + ")");
                     boolean itemOnBlacklist = false;
+
+                    String filteredName =
+                        price
+                            .getLowestItemName()
+                            .replace("✪", "*")
+                            .replace(" ✦", " +")
+                            .replace("⚚", "Fragged");
                     for (String blacklistItem : Config.BLACKLIST) {
                       if (Config.BLACKLIST_EXACT_MATCH
-                          ? price.getLowestItemName().equalsIgnoreCase(blacklistItem)
-                          : price.getLowestItemName().toLowerCase().contains(blacklistItem)) {
+                          ? filteredName.equalsIgnoreCase(blacklistItem)
+                          : filteredName.toLowerCase().contains(blacklistItem)) {
                         Main.printDebug(price.getLowestItemName() + " is blacklisted.");
                         itemOnBlacklist = true;
                       }
