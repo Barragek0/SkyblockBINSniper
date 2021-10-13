@@ -425,7 +425,6 @@ class BINSniper {
 
                   AtomicPrice price = entry.getValue();
 
-                  // One of the commits broke this, figure out why
                   if (daily_volumes.entrySet().stream()
                       .anyMatch(
                           o ->
