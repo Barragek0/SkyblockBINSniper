@@ -14,7 +14,7 @@ public class AtomicPrice {
    * information, but I believe there is plenty of room for improvement.
    */
 
-  private final AtomicReference<String> lowestItemName;
+  private final AtomicReference<String> lowestItemNameFormatted;
   private final AtomicReference<String> lowestItemNameOriginal;
   private final AtomicReference<String> lowestKey;
   private final AtomicInteger lowestValue;
@@ -23,7 +23,7 @@ public class AtomicPrice {
   private final AtomicInteger totalCount;
 
   public AtomicPrice() {
-    this.lowestItemName = new AtomicReference<>();
+    this.lowestItemNameFormatted = new AtomicReference<>();
     this.lowestItemNameOriginal = new AtomicReference<>();
     this.lowestKey = new AtomicReference<>();
     this.lowestValue = new AtomicInteger(-1);
@@ -33,7 +33,7 @@ public class AtomicPrice {
   }
 
   void reset() {
-    this.lowestItemName.lazySet(null);
+    this.lowestItemNameFormatted.lazySet(null);
     this.lowestItemNameOriginal.lazySet(null);
     this.lowestKey.lazySet(null);
     this.lowestValue.lazySet(-1);
@@ -53,7 +53,7 @@ public class AtomicPrice {
     if (lowest == -1 || newPrice < lowest) {
       secondLowestValue.set(lowest);
 
-      lowestItemName.set(itemName);
+      lowestItemNameFormatted.set(itemName);
       lowestItemNameOriginal.set(itemNameOriginal);
       lowestElapsedTime.set(elapsed);
       lowestKey.set(id);
@@ -69,8 +69,8 @@ public class AtomicPrice {
     return totalCount.get();
   }
 
-  public String getLowestItemName() {
-    return lowestItemName.get();
+  public String getLowestItemNameFormatted() {
+    return lowestItemNameFormatted.get();
   }
 
   public String getLowestItemNameOriginal() {

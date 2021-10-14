@@ -325,13 +325,13 @@ class BINSniper {
                         "Found flippable item '"
                             + entry.getKey()
                             + "' ("
-                            + entry.getValue().getLowestItemName()
+                            + entry.getValue().getLowestItemNameFormatted()
                             + ")");
                     boolean itemOnBlacklist = false;
 
                     String filteredName =
                         price
-                            .getLowestItemName()
+                            .getLowestItemNameFormatted()
                             .replace(" [COMMON]", "")
                             .replace(" [UNCOMMON]", "")
                             .replace(" [RARE]", "")
@@ -345,7 +345,7 @@ class BINSniper {
                       if (Config.BLACKLIST_EXACT_MATCH
                           ? filteredName.equalsIgnoreCase(blacklistItem)
                           : filteredName.toLowerCase().contains(blacklistItem)) {
-                        Main.printDebug(price.getLowestItemName() + " is blacklisted.");
+                        Main.printDebug(price.getLowestItemNameFormatted() + " is blacklisted.");
                         itemOnBlacklist = true;
                         break;
                       }
@@ -477,7 +477,7 @@ class BINSniper {
                       "/viewauction "
                           + price.getLowestKey()
                           + " | Item: "
-                          + price.getLowestItemName()
+                          + price.getLowestItemNameFormatted()
                           + " | Volume: "
                           + price.getTotalCount()
                           + " | Price: "
@@ -575,7 +575,7 @@ class BINSniper {
       }
 
       notificationIcon.displayMessage(
-          best.getLowestItemName() + " (Volume: " + best.getTotalCount() + ")",
+          best.getLowestItemNameFormatted() + " (Volume: " + best.getTotalCount() + ")",
           "Price: "
               + NumberFormat.getInstance().format(best.getLowestValue())
               + "\n"
