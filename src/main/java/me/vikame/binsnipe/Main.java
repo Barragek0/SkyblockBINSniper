@@ -1,12 +1,15 @@
 package me.vikame.binsnipe;
 
+import me.vikame.binsnipe.util.KeyboardListener;
+import me.vikame.binsnipe.util.PrimitiveHelper;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+
 import java.awt.*;
 import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -16,11 +19,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.PrimitiveHelper;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *

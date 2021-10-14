@@ -1,6 +1,6 @@
 package me.vikame.binsnipe;
 
-import java.awt.SystemTray;
+import java.awt.*;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;

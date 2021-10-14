@@ -17,20 +17,20 @@ public class SBHelper {
   }
 
   public static boolean isExistingBIN(LazyObject object) {
-    return object.has("bin") && !object.getBoolean("claimed")
+    return object.has("bin")
+        && !object.getBoolean("claimed")
         && object.getLong("end") > System.currentTimeMillis();
   }
 
   public static String stripInvalidChars(String itemName) {
-    return Constants.STRIP_COLOR_PATTERN.matcher(itemName).replaceAll("")
-        .replaceAll("\\p{C}}", "");
+    return Constants.STRIP_COLOR_PATTERN.matcher(itemName).replaceAll("").replaceAll("\\p{C}}", "");
   }
 
   public static boolean isRecombed(LazyObject object) {
     return isRecombed(object.getString("item_lore"));
   }
 
-  public static boolean isRecombed(String itemLore) {
+  private static boolean isRecombed(String itemLore) {
     return itemLore.endsWith("§ka");
   }
 
@@ -38,7 +38,7 @@ public class SBHelper {
     return isUsedCakeSoul(object.getString("item_lore"));
   }
 
-  public static boolean isUsedCakeSoul(String itemLore) {
+  private static boolean isUsedCakeSoul(String itemLore) {
     return itemLore.startsWith("§dCake Soul");
   }
 
@@ -46,7 +46,7 @@ public class SBHelper {
     return isFurniture(object.getString("item_lore"));
   }
 
-  public static boolean isFurniture(String itemLore) {
+  private static boolean isFurniture(String itemLore) {
     return itemLore.startsWith("§8Furniture");
   }
 
@@ -54,8 +54,7 @@ public class SBHelper {
     return isCosmetic(object.getString("item_lore"));
   }
 
-  public static boolean isCosmetic(String itemLore) {
+  private static boolean isCosmetic(String itemLore) {
     return itemLore.endsWith("COSMETIC") || itemLore.endsWith("COSMETIC §ka");
   }
-
 }

@@ -1,10 +1,6 @@
 package me.vikame.binsnipe.util;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class ExpiringSet<T> implements Set<T> {
 
@@ -12,7 +8,7 @@ public class ExpiringSet<T> implements Set<T> {
   private final long timer;
 
   public ExpiringSet(long timer) {
-    this.entries = new HashMap<>();
+    entries = new HashMap<>();
     this.timer = timer;
   }
 
@@ -108,5 +104,4 @@ public class ExpiringSet<T> implements Set<T> {
     entries.clear();
     expire();
   }
-
 }

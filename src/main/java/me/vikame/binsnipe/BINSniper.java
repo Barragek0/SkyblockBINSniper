@@ -1,39 +1,35 @@
 package me.vikame.binsnipe;
 
-import java.awt.AWTException;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
-import java.awt.TrayIcon.MessageType;
-import java.awt.datatransfer.StringSelection;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.net.*;
-import java.text.DecimalFormat;
-import java.text.NumberFormat;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.zip.GZIPInputStream;
-import javax.imageio.ImageIO;
-
 import me.doubledutch.lazyjson.LazyArray;
 import me.doubledutch.lazyjson.LazyElement;
 import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
 import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.AtomicPrice;
+import me.vikame.binsnipe.util.*;
 import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
-import me.vikame.binsnipe.util.ExpiringSet;
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.SBHelper;
-import me.vikame.binsnipe.util.UnboundedObjectPool;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.TrayIcon.MessageType;
+import java.awt.datatransfer.StringSelection;
+import java.awt.image.BufferedImage;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.Comparator;
+import java.util.Map;
+import java.util.TreeSet;
+import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.zip.GZIPInputStream;
 
 class BINSniper {
 
@@ -104,7 +100,7 @@ class BINSniper {
       notificationIcon = new TrayIcon(image, "BIN Sniper");
       notificationIcon.setImageAutoSize(true);
     } else {
-      this.notificationIcon = null;
+      notificationIcon = null;
     }
 
     doingIterativeCopy = new AtomicBoolean(false);
@@ -135,17 +131,16 @@ class BINSniper {
               }
 
               AtomicInteger completed = new AtomicInteger(0);
-              final int maxPages = totalPages.get();
+              int maxPages = totalPages.get();
 
               System.out.println();
               printLoadingBar(0, maxPages);
 
-              // noinspection rawtypes: We will only store CompletableFuture<Void> in this array.
               CompletableFuture[] futures = new CompletableFuture[maxPages];
 
               long start = System.currentTimeMillis();
               for (int page = 0; page < maxPages; page++) {
-                final int workingPage = page;
+                int workingPage = page;
                 CompletableFuture<Void> future =
                     Main.exec(
                         () -> {
@@ -471,11 +466,11 @@ class BINSniper {
         TimeUnit.MILLISECONDS);
   }
 
-  private static String formatValue(final long amount, final long div, final char suffix) {
+  private static String formatValue(long amount, long div, char suffix) {
     return PRINT_FORMAT.format(amount / (double) div) + suffix;
   }
 
-  private static String formatValue(final long amount) {
+  private static String formatValue(long amount) {
     if (amount >= 1_000_000_000_000_000L) {
       return formatValue(amount, 1_000_000_000_000_000L, 'q');
     } else if (amount >= 1_000_000_000_000L) {
@@ -532,7 +527,7 @@ class BINSniper {
     }
   }
 
-  private void iterateResultsToClipboard(final TreeSet<Map.Entry<String, AtomicPrice>> flips) {
+  private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
     System.out.println();
 
     int finished = 0;
@@ -679,8 +674,8 @@ class BINSniper {
 
         if (timeLastUpdated > this.timeLastUpdated.get()) {
           this.timeLastUpdated.set(timeLastUpdated);
-          this.totalPages.set(responseJsonObject.getInt("totalPages"));
-          this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
+          totalPages.set(responseJsonObject.getInt("totalPages"));
+          totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
         }
         return responseJsonObject.getJSONArray("auctions");
       } else if (url.startsWith(Constants.NOTENOUGHUPDATES_ENDPOINT)) {

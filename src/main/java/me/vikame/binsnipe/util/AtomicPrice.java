@@ -1,9 +1,10 @@
 package me.vikame.binsnipe.util;
 
+import me.doubledutch.lazyjson.LazyObject;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import me.doubledutch.lazyjson.LazyObject;
 
 public class AtomicPrice {
 
@@ -23,23 +24,23 @@ public class AtomicPrice {
   private final AtomicInteger totalCount;
 
   public AtomicPrice() {
-    this.lowestItemNameFormatted = new AtomicReference<>();
-    this.lowestItemNameOriginal = new AtomicReference<>();
-    this.lowestKey = new AtomicReference<>();
-    this.lowestValue = new AtomicInteger(-1);
-    this.lowestElapsedTime = new AtomicLong(-1);
-    this.secondLowestValue = new AtomicInteger(-1);
-    this.totalCount = new AtomicInteger(0);
+    lowestItemNameFormatted = new AtomicReference<>();
+    lowestItemNameOriginal = new AtomicReference<>();
+    lowestKey = new AtomicReference<>();
+    lowestValue = new AtomicInteger(-1);
+    lowestElapsedTime = new AtomicLong(-1);
+    secondLowestValue = new AtomicInteger(-1);
+    totalCount = new AtomicInteger(0);
   }
 
   void reset() {
-    this.lowestItemNameFormatted.lazySet(null);
-    this.lowestItemNameOriginal.lazySet(null);
-    this.lowestKey.lazySet(null);
-    this.lowestValue.lazySet(-1);
-    this.lowestElapsedTime.lazySet(-1);
-    this.secondLowestValue.lazySet(-1);
-    this.totalCount.lazySet(0);
+    lowestItemNameFormatted.lazySet(null);
+    lowestItemNameOriginal.lazySet(null);
+    lowestKey.lazySet(null);
+    lowestValue.lazySet(-1);
+    lowestElapsedTime.lazySet(-1);
+    secondLowestValue.lazySet(-1);
+    totalCount.lazySet(0);
   }
 
   public void tryUpdatePrice(String itemName, String itemNameOriginal, LazyObject binData) {
