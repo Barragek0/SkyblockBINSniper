@@ -329,22 +329,13 @@ class BINSniper {
                             + ")");
                     boolean itemOnBlacklist = false;
 
-                    String filteredName =
-                        price
-                            .getLowestItemNameFormatted()
-                            .replace(" [COMMON]", "")
-                            .replace(" [UNCOMMON]", "")
-                            .replace(" [RARE]", "")
-                            .replace(" [EPIC]", "")
-                            .replace(" [LEGENDARY]", "")
-                            .replace(" [SPECIAL]", "")
-                            .replace("✪", "*")
-                            .replace(" ✦", " +")
-                            .replace("⚚", "Fragged");
                     for (String blacklistItem : Config.BLACKLIST) {
                       if (Config.BLACKLIST_EXACT_MATCH
-                          ? filteredName.equalsIgnoreCase(blacklistItem)
-                          : filteredName.toLowerCase().contains(blacklistItem)) {
+                          ? price.getLowestItemNameOriginal().equalsIgnoreCase(blacklistItem)
+                          : price
+                              .getLowestItemNameOriginal()
+                              .toLowerCase()
+                              .contains(blacklistItem)) {
                         Main.printDebug(price.getLowestItemNameFormatted() + " is blacklisted.");
                         itemOnBlacklist = true;
                         break;
