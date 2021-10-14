@@ -411,7 +411,7 @@ class BINSniper {
 
                   System.out.println("/viewauction " + price.getLowestKey());
                   System.out.println(
-                      "  -> Item: "
+                      " -> Item: "
                           + price.getLowestItemNameFormatted()
                           + " | Volume: "
                           + price.getTotalCount()
@@ -422,7 +422,7 @@ class BINSniper {
                           + " | Profit: "
                           + formatValue(diff)
                           + " (+"
-                          + PRINT_FORMAT.format(profitPercentage)
+                          + (int) profitPercentage
                           + "%) ("
                           + timeTaken
                           + "ms)");
