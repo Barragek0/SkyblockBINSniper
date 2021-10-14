@@ -78,7 +78,8 @@ public class Main {
           System.out.println("Configuration:");
 
           for (Field field : Config.class.getDeclaredFields()) {
-            if (!properties.containsKey(field.getName())) {
+            if (!properties.containsKey(field.getName())
+                && !Modifier.isTransient(field.getModifiers())) {
               properties.setProperty(
                   field.getName(),
                   field.getType().equals(boolean.class)
