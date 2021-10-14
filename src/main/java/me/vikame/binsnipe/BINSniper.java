@@ -379,16 +379,16 @@ class BINSniper {
                           try {
                             LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
                             if (itemObject != null) {
-                              if (itemObject.get("sales") != null)
-                                daily_volumes.put(entry.getKey(), (Long) itemObject.get("sales"));
+                              long volume = -1;
+                              if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
                               else if (itemObject.get("clean_sales") != null)
-                                daily_volumes.put(
-                                    entry.getKey(), (Long) itemObject.get("clean_sales"));
+                                volume = (Long) itemObject.get("clean_sales");
                               else
                                 Main.printDebug(
                                     "Couldn't find AH Sales for "
                                         + entry.getKey()
                                         + " in NEU API JSON");
+                              if (volume != -1) daily_volumes.put(entry.getKey(), volume);
                             }
                           } catch (Throwable e) {
                             Main.printDebug(
