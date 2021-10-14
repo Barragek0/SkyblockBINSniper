@@ -66,9 +66,6 @@ class BINSniper {
   private CompletableFuture<Void> iterativeTask;
   private final AtomicBoolean doingIterativeCopy;
 
-  // Holds item data from NotEnoughUpdates API
-  private HashMap<String, Long> daily_volumes = new HashMap<>();
-
   BINSniper() {
     System.out.println("Starting BIN sniper...");
 
@@ -301,6 +298,9 @@ class BINSniper {
               TreeSet<Map.Entry<String, AtomicPrice>> flips =
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
 
+              LazyObject neuObject =
+                  (LazyObject) getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0);
+
               for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
                 if (flipsAlreadyShown.contains(entry.getKey())) {
                   continue;
@@ -342,7 +342,26 @@ class BINSniper {
                       }
                     }
 
-                    if (!itemOnBlacklist) {
+                    long neuVolume = Long.MAX_VALUE;
+                    try {
+                      LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
+                      if (itemObject != null) {
+                        long volume = -1;
+                        if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
+                        else if (itemObject.get("clean_sales") != null)
+                          volume = (Long) itemObject.get("clean_sales");
+                        else
+                          Main.printDebug(
+                              "Couldn't find AH Sales for " + entry.getKey() + " in NEU API JSON");
+                        if (volume != -1) neuVolume = volume;
+                      }
+                    } catch (Throwable e) {
+                      Main.printDebug(
+                          "Error parsing JSON for entry " + entry.getKey() + " from NEU API:");
+                      if (Config.OUTPUT_ERRORS) e.printStackTrace();
+                    }
+
+                    if (!itemOnBlacklist && neuVolume < Config.MINIMUM_DAILY_SALES) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
@@ -357,48 +376,6 @@ class BINSniper {
                     }
                   }
                 }
-              }
-
-              CompletableFuture<Void> NotEnoughUpdatesFuture =
-                  Main.exec(
-                      () -> {
-                        LazyObject neuObject =
-                            (LazyObject)
-                                getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0);
-
-                        for (Map.Entry<String, AtomicPrice> entry : flips) {
-                          try {
-                            LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
-                            if (itemObject != null) {
-                              long volume = -1;
-                              if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
-                              else if (itemObject.get("clean_sales") != null)
-                                volume = (Long) itemObject.get("clean_sales");
-                              else
-                                Main.printDebug(
-                                    "Couldn't find AH Sales for "
-                                        + entry.getKey()
-                                        + " in NEU API JSON");
-                              if (volume != -1) daily_volumes.put(entry.getKey(), volume);
-                            }
-                          } catch (Throwable e) {
-                            Main.printDebug(
-                                "Error parsing JSON for entry "
-                                    + entry.getKey()
-                                    + " from NEU API:");
-                            if (Config.OUTPUT_ERRORS) e.printStackTrace();
-                          }
-                        }
-                      });
-
-              try {
-                NotEnoughUpdatesFuture.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
-              } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                NotEnoughUpdatesFuture.cancel(true);
-                clearString();
-                System.out.println("Could not retrieve data from NEU API.");
-                if (Config.OUTPUT_ERRORS) e.printStackTrace();
-                return;
               }
 
               try {
@@ -418,42 +395,10 @@ class BINSniper {
                 System.out.println("Unable to find a flip after " + timeTaken + " ms.");
               } else {
 
-                Iterator<Map.Entry<String, AtomicPrice>> entryIterator = flips.iterator();
-                while (entryIterator.hasNext()) {
-                  Map.Entry<String, AtomicPrice> entry = entryIterator.next();
+                for (Map.Entry<String, AtomicPrice> entry : flips) {
                   flipsAlreadyShown.add(entry.getKey());
 
                   AtomicPrice price = entry.getValue();
-
-                  if (daily_volumes.entrySet().stream()
-                      .anyMatch(
-                          o ->
-                              o.getKey().equals(entry.getKey())
-                                  && o.getValue() < Config.MINIMUM_DAILY_SALES)) {
-                    System.out.println(
-                        "Skipping "
-                            + entry.getKey()
-                            + " as it has less than the required minimum_daily_sales of "
-                            + Config.MINIMUM_DAILY_SALES);
-                    // This section has to be an iterator instead of an enhanced for loop so
-                    // ConcurrentModificationException doesn't get thrown when removing the entry
-                    // from the treeset.
-                    entryIterator.remove();
-                    if (flips.size() <= 1) {
-                      if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
-                        doingIterativeCopy.set(true);
-                        iterativeTask =
-                            Main.exec(() -> iterateResultsToClipboard(flips))
-                                .thenRun(this::cleanupAuctionData);
-                      } else {
-                        cleanupAuctionData();
-                      }
-                      return;
-                    }
-                    continue;
-                  } else {
-                    Main.printDebug("Not skipping " + entry.getKey());
-                  }
 
                   int lowest = price.getLowestValue();
                   int second = price.getSecondLowestValue();
@@ -546,8 +491,6 @@ class BINSniper {
 
     binPrices.clear();
     totalBins.lazySet(0);
-
-    daily_volumes.clear();
 
     if (Config.EXPLICIT_GC_AFTER_FLIP) {
       System.gc();
