@@ -179,9 +179,8 @@ class BINSniper {
                                 StringBuilder itemName =
                                     new StringBuilder(
                                         SBHelper.stripInvalidChars(binData.getString("item_name")));
-                                StringBuilder itemNameOriginal =
-                                    new StringBuilder(
-                                        SBHelper.stripInvalidChars(binData.getString("item_name")));
+                                String itemNameOriginal =
+                                    SBHelper.stripInvalidChars(binData.getString("item_name"));
 
                                 try {
                                   NBTCompound itemData =
@@ -257,8 +256,7 @@ class BINSniper {
 
                                 binPrices
                                     .computeIfAbsent(itemId, ign -> createAtomicPrice())
-                                    .tryUpdatePrice(
-                                        filteredName, itemNameOriginal.toString(), binData);
+                                    .tryUpdatePrice(filteredName, itemNameOriginal, binData);
                                 totalBins.incrementAndGet();
                               }
 
