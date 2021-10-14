@@ -426,6 +426,7 @@ class BINSniper {
                           + "%) ("
                           + timeTaken
                           + "ms)");
+                  System.out.println();
                 }
 
                 AtomicPrice best = flips.last().getValue();
