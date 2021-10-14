@@ -15,6 +15,7 @@ public class AtomicPrice {
    */
 
   private final AtomicReference<String> lowestItemName;
+  private final AtomicReference<String> lowestItemNameOriginal;
   private final AtomicReference<String> lowestKey;
   private final AtomicInteger lowestValue;
   private final AtomicLong lowestElapsedTime;
@@ -23,6 +24,7 @@ public class AtomicPrice {
 
   public AtomicPrice() {
     this.lowestItemName = new AtomicReference<>();
+    this.lowestItemNameOriginal = new AtomicReference<>();
     this.lowestKey = new AtomicReference<>();
     this.lowestValue = new AtomicInteger(-1);
     this.lowestElapsedTime = new AtomicLong(-1);
@@ -30,8 +32,9 @@ public class AtomicPrice {
     this.totalCount = new AtomicInteger(0);
   }
 
-  public void reset() {
+  void reset() {
     this.lowestItemName.lazySet(null);
+    this.lowestItemNameOriginal.lazySet(null);
     this.lowestKey.lazySet(null);
     this.lowestValue.lazySet(-1);
     this.lowestElapsedTime.lazySet(-1);
@@ -67,6 +70,10 @@ public class AtomicPrice {
 
   public String getLowestItemName() {
     return lowestItemName.get();
+  }
+
+  public String getLowestItemNameOriginal() {
+    return lowestItemNameOriginal.get();
   }
 
   public String getLowestKey() {
@@ -106,5 +113,4 @@ public class AtomicPrice {
       return new AtomicPrice();
     }
   }
-
 }
