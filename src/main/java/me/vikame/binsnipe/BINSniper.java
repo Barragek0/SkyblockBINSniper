@@ -340,17 +340,20 @@ class BINSniper {
                       }
                     }
 
-                    long neuVolume = Long.MAX_VALUE;
+                    long neuVolume = -1;
                     try {
                       LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
                       if (itemObject != null) {
                         long volume = -1;
                         if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
-                        else if (itemObject.get("clean_sales") != null)
+                        else if (itemObject.has("clean_sales"))
                           volume = (Long) itemObject.get("clean_sales");
-                        else
+                        else {
                           Main.printDebug(
                               "Couldn't find AH Sales for " + entry.getKey() + " in NEU API JSON");
+                          // Set the volume to max value if the item can't be found in the NEU API.
+                          volume = Long.MAX_VALUE;
+                        }
                         if (volume != -1) neuVolume = volume;
                       }
                     } catch (Throwable e) {
@@ -359,7 +362,13 @@ class BINSniper {
                       if (Config.OUTPUT_ERRORS) e.printStackTrace();
                     }
 
-                    if (!itemOnBlacklist && neuVolume < Config.MINIMUM_DAILY_SALES) {
+                    Main.printDebug(
+                        "NEU Volume for item: "
+                            + entry.getKey()
+                            + " is "
+                            + (neuVolume == Long.MAX_VALUE ? "N/A" : neuVolume));
+
+                    if (!itemOnBlacklist && neuVolume >= Config.MINIMUM_DAILY_SALES) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
