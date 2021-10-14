@@ -409,10 +409,9 @@ class BINSniper {
                   float profitPercentage =
                       (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
+                  System.out.println("/viewauction " + price.getLowestKey());
                   System.out.println(
-                      "/viewauction "
-                          + price.getLowestKey()
-                          + " | Item: "
+                      "  -> Item: "
                           + price.getLowestItemNameFormatted()
                           + " | Volume: "
                           + price.getTotalCount()
