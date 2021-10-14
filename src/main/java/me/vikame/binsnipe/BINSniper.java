@@ -171,11 +171,9 @@ class BINSniper {
                                 }
 
                                 String itemId;
-                                StringBuilder itemName =
-                                    new StringBuilder(
-                                        SBHelper.stripInvalidChars(binData.getString("item_name")));
                                 String itemNameOriginal =
                                     SBHelper.stripInvalidChars(binData.getString("item_name"));
+                                StringBuilder itemName = new StringBuilder(itemNameOriginal);
 
                                 try {
                                   NBTCompound itemData =
