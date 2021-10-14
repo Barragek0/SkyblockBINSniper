@@ -42,7 +42,7 @@ public class AtomicPrice {
     this.totalCount.lazySet(0);
   }
 
-  public void tryUpdatePrice(String itemName, LazyObject binData) {
+  public void tryUpdatePrice(String itemName, String itemNameOriginal, LazyObject binData) {
     long elapsed = System.currentTimeMillis() - binData.getLong("start");
     String id = binData.getString("uuid");
     int newPrice = binData.getInt("starting_bid");
@@ -54,6 +54,7 @@ public class AtomicPrice {
       secondLowestValue.set(lowest);
 
       lowestItemName.set(itemName);
+      lowestItemNameOriginal.set(itemNameOriginal);
       lowestElapsedTime.set(elapsed);
       lowestKey.set(id);
       lowestValue.set(newPrice);
