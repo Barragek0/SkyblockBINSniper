@@ -4,8 +4,10 @@ import me.vikame.binsnipe.Config;
 import org.jnativehook.keyboard.NativeKeyEvent;
 import org.jnativehook.keyboard.NativeKeyListener;
 
-import static org.jnativehook.NativeInputEvent.CTRL_MASK;
-import static org.jnativehook.keyboard.NativeKeyEvent.VC_V;
+import java.awt.*;
+
+import static org.jnativehook.NativeInputEvent.*;
+import static org.jnativehook.keyboard.NativeKeyEvent.*;
 
 public class KeyboardListener implements NativeKeyListener {
 
@@ -33,6 +35,25 @@ public class KeyboardListener implements NativeKeyListener {
           pasteCallback.run();
           pasteCallback = null;
         }
+      }
+    }
+
+    if (e.getKeyCode() == VC_T
+        && (e.getModifiers() & CTRL_MASK) == 0
+        && (e.getModifiers() & SHIFT_MASK) == 0
+        && (e.getModifiers() & ALT_MASK) == 0
+        && Config.AUTOMATICALLY_PASTE_AFTER_PRESSING_CHAT_KEYBIND) {
+      try {
+        Robot robot = new Robot();
+        robot.keyPress(VC_CONTROL);
+        robot.delay(15 + (int) (Math.random() * 10));
+        robot.keyPress(VC_V);
+        robot.delay(15 + (int) (Math.random() * 10));
+        robot.keyRelease(VC_V);
+        robot.delay(15 + (int) (Math.random() * 10));
+        robot.keyRelease(VC_CONTROL);
+      } catch (AWTException ex) {
+        ex.printStackTrace();
       }
     }
   }

@@ -5,8 +5,11 @@ import me.doubledutch.lazyjson.LazyElement;
 import me.doubledutch.lazyjson.LazyObject;
 import me.nullicorn.nedit.NBTReader;
 import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.*;
+import me.vikame.binsnipe.util.AtomicPrice;
 import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
+import me.vikame.binsnipe.util.ExpiringSet;
+import me.vikame.binsnipe.util.SBHelper;
+import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -30,6 +33,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
+
+import static me.vikame.binsnipe.util.KeyboardListener.pasteCallback;
+import static org.jnativehook.keyboard.NativeKeyEvent.VC_T;
 
 class BINSniper {
 
@@ -125,7 +131,7 @@ class BINSniper {
                 doingIterativeCopy.set(false);
                 iterativeTask.cancel(true);
                 // HACK: Interrupt the indefinite sleep in the iterative copy task!
-                KeyboardListener.pasteCallback.run();
+                pasteCallback.run();
                 System.out.println(
                     "Commands were not pasted before we started a new flip attempt.");
               }
@@ -453,7 +459,14 @@ class BINSniper {
               if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
                 doingIterativeCopy.set(true);
                 iterativeTask =
-                    Main.exec(() -> iterateResultsToClipboard(flips))
+                    Main.exec(
+                            () -> {
+                              try {
+                                iterateResultsToClipboard(flips);
+                              } catch (AWTException e) {
+                                e.printStackTrace();
+                              }
+                            })
                         .thenRun(this::cleanupAuctionData);
               } else {
                 cleanupAuctionData();
@@ -527,7 +540,8 @@ class BINSniper {
     }
   }
 
-  private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
+  private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips)
+      throws AWTException {
     System.out.println();
 
     int finished = 0;
@@ -560,11 +574,20 @@ class BINSniper {
       Thread current = Thread.currentThread();
 
       // Interrupt the sleeping thread when the paste callback is triggered.
-      KeyboardListener.pasteCallback = current::interrupt;
+      pasteCallback = current::interrupt;
 
       try {
-        // Block the thread indefinitely until the pasteCallback interrupts the thread.
-        Thread.sleep(Long.MAX_VALUE);
+        if (Config.AUTOMATICALLY_OPEN_CHAT_WHEN_ITERATING) {
+          Thread.sleep(1);
+          Robot robot = new Robot();
+          robot.keyPress(VC_T);
+          robot.delay(15 + (int) (Math.random() * 10));
+          robot.keyRelease(VC_T);
+          pasteCallback.run();
+          pasteCallback = null;
+        } else
+          // Block the thread indefinitely until the pasteCallback interrupts the thread.
+          Thread.sleep(Long.MAX_VALUE);
       } catch (InterruptedException ignored) {
       }
 

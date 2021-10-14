@@ -120,6 +120,14 @@ public class Config {
    */
   static int MINIMUM_DAILY_SALES = 5;
 
+  /* Whether to automatically paste or not after the chat keybind is pressed
+   */
+  public static boolean AUTOMATICALLY_PASTE_AFTER_PRESSING_CHAT_KEYBIND = true;
+
+  /* Whether to automatically open the chat when iterating through found flips
+   */
+  public static boolean AUTOMATICALLY_OPEN_CHAT_WHEN_ITERATING = true;
+
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
   static transient int LOADING_BAR_SEGMENTS = 40;
