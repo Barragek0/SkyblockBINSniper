@@ -725,30 +725,23 @@ class BINSniper {
       connection.disconnect();
 
       LazyObject responseJsonObject = new LazyObject(response.toString());
-      if (url.equalsIgnoreCase(Constants.AUCTIONS_ENDPOINT)
-          && !responseJsonObject.getBoolean("success")) {
-        return null;
-      }
 
-      String formattedUrl = url;
-      if (url.contains("?page="))
-        formattedUrl = formattedUrl.substring(0, formattedUrl.indexOf("?"));
+      if (url.startsWith(Constants.AUCTIONS_ENDPOINT)) {
+        if (!responseJsonObject.getBoolean("success")) {
+          return null;
+        }
+        long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
 
-      switch (formattedUrl) {
-        case Constants.AUCTIONS_ENDPOINT:
-          long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
-
-          if (timeLastUpdated > this.timeLastUpdated.get()) {
-            this.timeLastUpdated.set(timeLastUpdated);
-            this.totalPages.set(responseJsonObject.getInt("totalPages"));
-            this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
-          }
-
-          return responseJsonObject.getJSONArray("auctions");
-        case Constants.NOTENOUGHUPDATES_ENDPOINT:
-          return responseJsonObject;
-        default:
-          throw new IOException("Unknown endpoint: " + url);
+        if (timeLastUpdated > this.timeLastUpdated.get()) {
+          this.timeLastUpdated.set(timeLastUpdated);
+          this.totalPages.set(responseJsonObject.getInt("totalPages"));
+          this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
+        }
+        return responseJsonObject.getJSONArray("auctions");
+      } else if (url.startsWith(Constants.NOTENOUGHUPDATES_ENDPOINT)) {
+        return responseJsonObject;
+      } else {
+        throw new IOException("Unknown endpoint: " + url);
       }
 
     } catch (IOException e) {
