@@ -1,24 +1,20 @@
 package me.vikame.binsnipe;
 
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.PrimitiveHelper;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
-
-import java.awt.*;
-import java.io.*;
-import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
-import java.text.NumberFormat;
-import java.util.Properties;
+import java.awt.GraphicsEnvironment;
+import java.io.Console;
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import me.vikame.binsnipe.config.ConfigFile;
+import me.vikame.binsnipe.util.KeyboardListener;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *
@@ -67,108 +63,8 @@ public class Main {
     } else {
       System.setErr(System.out);
 
-      File config = new File(System.getProperty("user.dir"), "BINSniper.config");
-      if (config.exists()) {
-        System.out.println("Loading sniper configuration...");
-        try {
-          FileReader reader = new FileReader(config);
-          Properties properties = new Properties();
-          properties.load(reader);
-
-          System.out.println("Configuration:");
-
-          for (Field field : Config.class.getDeclaredFields()) {
-            if (!properties.containsKey(field.getName())
-                && !Modifier.isTransient(field.getModifiers())) {
-              properties.setProperty(
-                  field.getName(),
-                  field.getType().equals(boolean.class)
-                          || field.getType().equals(int.class)
-                          || field.getType().equals(long.class)
-                          || field.getType().equals(float.class)
-                      ? String.valueOf(field.get(Main.class))
-                      : field.getType().equals(java.util.List.class)
-                          ? String.join(",", (java.util.List) field.get(Main.class))
-                          : "");
-              properties.store(new FileOutputStream(config), null);
-            }
-            try {
-              String prop = properties.getProperty(field.getName());
-
-              Class<?> type = PrimitiveHelper.wrap(field.getType());
-              if (type == Boolean.class) {
-                field.setBoolean(null, Boolean.parseBoolean(prop));
-              } else if (type == Integer.class) {
-                field.setInt(null, Integer.parseInt(prop.replace(",", "")));
-              } else if (type == Float.class) {
-                field.set(null, Float.parseFloat(prop.replace(",", "")));
-              } else if (type == Long.class) {
-                field.set(null, Long.parseLong(prop.replace(",", "")));
-              } else if (type == java.util.List.class) {
-                field.set(null, Stream.of(prop.split(",", -1)).collect(Collectors.toList()));
-              } else {
-                System.out.println(
-                    "Could not parse data type for "
-                        + field.getName()
-                        + " with type "
-                        + field.getType()
-                        + ".");
-                continue;
-              }
-
-              if (Number.class.isAssignableFrom(type)) {
-                prop = NumberFormat.getInstance().format(field.get(null));
-              }
-
-              System.out.println(" > " + field.getName() + ": " + prop);
-            } catch (IllegalAccessException e) {
-              e.printStackTrace();
-              System.out.println("Failed to set '" + field + "' to config value.");
-            }
-          }
-
-          reader.close();
-        } catch (IOException | IllegalAccessException e) {
-          e.printStackTrace();
-          System.out.println("Failed to read configuration data. Using defaults...");
-        }
-      } else if (config.createNewFile()) {
-        Properties properties = new Properties();
-
-        for (Field field : Config.class.getDeclaredFields()) {
-          if (Modifier.isTransient(field.getModifiers())) {
-            continue;
-          }
-
-          try {
-            Object value = field.get(null);
-
-            String propValue;
-            if (value instanceof Number) {
-              propValue = NumberFormat.getInstance().format(value);
-            } else {
-              propValue = value.toString();
-            }
-
-            properties.setProperty(field.getName(), propValue);
-          } catch (IllegalAccessException e) {
-            e.printStackTrace();
-            System.out.println("Failed to get default config value for '" + field + "'");
-          }
-        }
-
-        FileWriter writer = new FileWriter(config);
-        properties.store(writer, "Skyblock BIN Sniper configuration data");
-        writer.close();
-
-        System.out.println(
-            "A Configuration file to edit sniper preferences has been created at '"
-                + config.getAbsolutePath()
-                + "'");
-      } else {
-        System.out.println(
-            "Couldn't create configuration file! You will be forced to use default sniper preferences.");
-      }
+      ConfigFile config = new ConfigFile(new File(System.getProperty("user.dir"), "BINSniper.config"));
+      config.load();
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
 
@@ -227,6 +123,10 @@ public class Main {
 
   static CompletableFuture<Void> exec(Runnable runnable) {
     return CompletableFuture.runAsync(runnable, THREAD_POOL);
+  }
+
+  static <T> CompletableFuture<T> exec(Supplier<T> supplier) {
+    return CompletableFuture.supplyAsync(supplier, THREAD_POOL);
   }
 
   static void schedule(Runnable runnable, long initialDelay, long delay, TimeUnit unit) {

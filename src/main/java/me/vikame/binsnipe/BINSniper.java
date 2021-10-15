@@ -147,6 +147,8 @@ class BINSniper {
               printLoadingBar(0, maxPages);
 
               CompletableFuture[] futures = new CompletableFuture[maxPages];
+              CompletableFuture<LazyObject> neuFuture = Main.exec(
+                  () -> (LazyObject) getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0));
 
               long start = System.currentTimeMillis();
               for (int page = 0; page < maxPages; page++) {
@@ -312,13 +314,26 @@ class BINSniper {
 
               clearString();
 
+              boolean neuWait = !neuFuture.isDone();
+              if(neuWait) printClearableString("Waiting on NEU API...");
+              LazyObject neuObject;
+              try {
+                neuObject = neuFuture.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                neuFuture.cancel(true);
+                clearString();
+                System.out.println("Could not retrieve auction statistics from the NEU API in time!");
+                System.out.println("This may be due to your internet connection being slow, or");
+                System.out.println("the NEU API may be responding slowly.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
+                return;
+              }
+              if(neuWait) clearString();
+
               Main.printDebug(binPrices.size() + " total BINs processed!");
 
               TreeSet<Map.Entry<String, AtomicPrice>> flips =
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
-
-              LazyObject neuObject =
-                  (LazyObject) getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0);
 
               for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
                 if (flipsAlreadyShown.contains(entry.getKey())) {
@@ -347,35 +362,27 @@ class BINSniper {
                             + entry.getValue().getLowestItemNameFormatted()
                             + ")");
 
-                    long neuVolume = -1;
-                    try {
-                      LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
-                      if (itemObject != null) {
-                        long volume = -1;
-                        if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
-                        else if (itemObject.has("clean_sales"))
-                          volume = (Long) itemObject.get("clean_sales");
-                        else {
-                          Main.printDebug(
-                              "Couldn't find AH Sales for " + entry.getKey() + " in NEU API JSON");
-                          // Set the volume to max value if the item can't be found in the NEU API.
-                          volume = Long.MAX_VALUE;
-                        }
-                        if (volume != -1) neuVolume = volume;
+                    long volume = Long.MAX_VALUE;
+
+                    String itemId = entry.getKey();
+                    if(itemId.contains("|")) itemId = itemId.split("\\|")[0];
+
+                    LazyObject itemObject = (LazyObject) neuObject.get(itemId);
+                    if (itemObject != null) {
+                      if (itemObject.has("sales")) {
+                        volume = (Long) itemObject.get("sales");
+                      } else if (itemObject.has("clean_sales")) {
+                        volume = (Long) itemObject.get("clean_sales");
                       }
-                    } catch (Throwable e) {
-                      Main.printDebug(
-                          "Error parsing JSON for entry " + entry.getKey() + " from NEU API:");
-                      if (Config.OUTPUT_ERRORS) e.printStackTrace();
                     }
 
                     Main.printDebug(
                         "NEU Volume for item: "
                             + entry.getKey()
                             + " is "
-                            + (neuVolume == Long.MAX_VALUE ? "N/A" : neuVolume));
+                            + (volume == Long.MAX_VALUE ? "N/A" : volume));
 
-                    if (neuVolume >= Config.MINIMUM_DAILY_SALES) {
+                    if (volume >= Config.MINIMUM_DAILY_SALES) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
