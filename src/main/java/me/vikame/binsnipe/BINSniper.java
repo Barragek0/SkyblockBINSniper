@@ -1,15 +1,9 @@
 package me.vikame.binsnipe;
 
-import me.doubledutch.lazyjson.LazyArray;
-import me.doubledutch.lazyjson.LazyElement;
-import me.doubledutch.lazyjson.LazyObject;
-import me.nullicorn.nedit.NBTReader;
-import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.*;
-import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
-
-import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.AWTException;
+import java.awt.SystemTray;
+import java.awt.Toolkit;
+import java.awt.TrayIcon;
 import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -25,11 +19,27 @@ import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
+import javax.imageio.ImageIO;
+import me.doubledutch.lazyjson.LazyArray;
+import me.doubledutch.lazyjson.LazyElement;
+import me.doubledutch.lazyjson.LazyObject;
+import me.nullicorn.nedit.NBTReader;
+import me.nullicorn.nedit.type.NBTCompound;
+import me.vikame.binsnipe.util.AtomicPrice;
+import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
+import me.vikame.binsnipe.util.ExpiringSet;
+import me.vikame.binsnipe.util.KeyboardListener;
+import me.vikame.binsnipe.util.SBHelper;
+import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 class BINSniper {
 
@@ -376,18 +386,6 @@ class BINSniper {
                     }
                   }
                 }
-              }
-
-              try {
-                all.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
-              } catch (InterruptedException | ExecutionException | TimeoutException e) {
-                all.cancel(true);
-                clearString();
-                System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
-                System.out.println("This may be due to your internet connection being slow, or");
-                System.out.println("the Hypixel API may be responding slowly.");
-                if (Config.OUTPUT_ERRORS) e.printStackTrace();
-                return;
               }
 
               long timeTaken = System.currentTimeMillis() - start;
