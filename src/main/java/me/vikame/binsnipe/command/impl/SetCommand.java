@@ -52,6 +52,10 @@ public class SetCommand extends Command {
     try{
       parsed = parser.fromString(value);
     }catch(Exception e) {
+      parsed = null;
+    }
+
+    if(parsed == null) {
       System.out.println("Invalid value for key " + fieldName + ". Value must be a(n) " + field.getType().getSimpleName() + ".");
       return;
     }

@@ -10,7 +10,9 @@ public class BooleanParser extends Parser<Boolean> {
 
   @Override
   public Boolean fromString(String string) {
-    return Boolean.parseBoolean(string);
+    if(string.equalsIgnoreCase("true") || string.equalsIgnoreCase("yes")) return true;
+    else if(string.equalsIgnoreCase("false") || string.equalsIgnoreCase("no")) return false;
+    else throw new RuntimeException("Cannot parse string " + string + " to boolean.");
   }
 
   @Override
