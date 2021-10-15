@@ -70,6 +70,13 @@ public class Main {
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
 
+      if(Config.UPDATE_CHECK_RATE < 500) {
+        Config.UPDATE_CHECK_RATE = 500;
+        System.out.println("Your configuration file has an update check rate lower than the minimum of 500ms.");
+        System.out.println("Since this would put too much load on your network or the Hypixel API,");
+        System.out.println("it has been changed to 500ms.");
+      }
+
       // only start keyboard listener if we're going to iterate
       if (Config.ITERATE_RESULTS_TO_CLIPBOARD) {
         // Logger defaults to all, change it to warning
