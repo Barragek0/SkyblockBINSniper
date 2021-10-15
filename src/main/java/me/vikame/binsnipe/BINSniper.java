@@ -1,9 +1,15 @@
 package me.vikame.binsnipe;
 
-import java.awt.AWTException;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
+import me.doubledutch.lazyjson.LazyArray;
+import me.doubledutch.lazyjson.LazyElement;
+import me.doubledutch.lazyjson.LazyObject;
+import me.nullicorn.nedit.NBTReader;
+import me.nullicorn.nedit.type.NBTCompound;
+import me.vikame.binsnipe.util.*;
+import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -19,27 +25,11 @@ import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
-import javax.imageio.ImageIO;
-import me.doubledutch.lazyjson.LazyArray;
-import me.doubledutch.lazyjson.LazyElement;
-import me.doubledutch.lazyjson.LazyObject;
-import me.nullicorn.nedit.NBTReader;
-import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.AtomicPrice;
-import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
-import me.vikame.binsnipe.util.ExpiringSet;
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.SBHelper;
-import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 class BINSniper {
 
@@ -80,15 +70,11 @@ class BINSniper {
     binPrices = new ConcurrentHashMap<>();
 
     if (Config.CACHE_ATOMIC_OBJECTS) {
-      if (Config.EXPLICIT_GC_AFTER_FLIP) {
-        System.err.println(
-            "WARNING: The use-case of EXPLICIT_GC_AFTER_FLIP is nullified when CACHE_ATOMIC_OBJECTS is used. We recommend the use of one or the other, not both.");
-      }
+      if (Config.EXPLICIT_GC_AFTER_FLIP) System.err.println(
+        "WARNING: The use-case of EXPLICIT_GC_AFTER_FLIP is nullified when CACHE_ATOMIC_OBJECTS is used. We recommend the use of one or the other, not both.");
 
       objectPool = new UnboundedAtomicPricePool(2048);
-    } else {
-      objectPool = null;
-    }
+    } else objectPool = null;
 
     flipsAlreadyShown = new ExpiringSet<>(60000 * 5);
 
@@ -109,9 +95,7 @@ class BINSniper {
 
       notificationIcon = new TrayIcon(image, "BIN Sniper");
       notificationIcon.setImageAutoSize(true);
-    } else {
-      notificationIcon = null;
-    }
+    } else notificationIcon = null;
 
     doingIterativeCopy = new AtomicBoolean(false);
 
@@ -167,34 +151,25 @@ class BINSniper {
                               long pageStart = System.currentTimeMillis();
                               for (int i = 0; i < auctionArray.length(); i++) {
                                 LazyObject binData = auctionArray.getJSONObject(i);
-                                if (!SBHelper.isExistingBIN(binData)) {
-                                  continue;
-                                }
+                                if (!SBHelper.isExistingBIN(binData)) continue;
 
-                                if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) {
-                                  continue;
-                                }
-                                if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) {
-                                  continue;
-                                }
+                                if (Config.IGNORE_FURNITURE && SBHelper.isFurniture(binData)) continue;
+                                if (Config.IGNORE_COSMETICS && SBHelper.isCosmetic(binData)) continue;
                                 if (Config.IGNORE_USED_CAKE_SOULS
-                                    && SBHelper.isUsedCakeSoul(binData)) {
-                                  continue;
-                                }
+                                    && SBHelper.isUsedCakeSoul(binData)) continue;
 
                                 String itemNameOriginal =
                                     SBHelper.stripInvalidChars(binData.getString("item_name"));
 
                                 boolean isBlacklisted = false;
-                                for (String blacklistItem : Config.BLACKLIST) {
+                                for (String blacklistItem : Config.BLACKLIST)
                                   if (Config.BLACKLIST_EXACT_MATCH
-                                      ? itemNameOriginal.equalsIgnoreCase(blacklistItem)
-                                      : itemNameOriginal.toLowerCase()
-                                          .contains(blacklistItem.toLowerCase())) {
+                                    ? itemNameOriginal.equalsIgnoreCase(blacklistItem)
+                                    : itemNameOriginal.toLowerCase()
+                                    .contains(blacklistItem.toLowerCase())) {
                                     isBlacklisted = true;
                                     break;
                                   }
-                                }
 
                                 if(isBlacklisted) {
                                   Main.printDebug(itemNameOriginal + " is blacklisted.");
@@ -231,9 +206,7 @@ class BINSniper {
                                   int stars = skyblockAttributes.getInt("dungeon_item_level", 0);
                                   String skin = skyblockAttributes.getString("skin");
 
-                                  if (Config.IGNORE_STARS && id.startsWith("STARRED_")) {
-                                    id = id.substring(8);
-                                  }
+                                  if (Config.IGNORE_STARS && id.startsWith("STARRED_")) id = id.substring(8);
 
                                   if (id.equalsIgnoreCase("PET")) {
                                     LazyObject petInfo =
@@ -252,9 +225,7 @@ class BINSniper {
                                           + (Config.IGNORE_STARS ? "" : "|" + stars)
                                           + (Config.IGNORE_SKINS ? "" : "|" + skin);
 
-                                  for (int star = 0; star < stars; star++) {
-                                    itemName.append("*");
-                                  }
+                                  for (int star = 0; star < stars; star++) itemName.append("*");
 
                                   itemName
                                       .append(" [")
@@ -262,9 +233,7 @@ class BINSniper {
                                       .append(recombed ? ", RECOMB" : "")
                                       .append("]");
 
-                                  if (skin != null) {
-                                    itemName.append(" [").append(skin).append("]");
-                                  }
+                                  if (skin != null) itemName.append(" [").append(skin).append("]");
                                 } catch (Exception e) {
                                   if (Config.OUTPUT_ERRORS) e.printStackTrace();
                                   continue;
@@ -336,9 +305,7 @@ class BINSniper {
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
 
               for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
-                if (flipsAlreadyShown.contains(entry.getKey())) {
-                  continue;
-                }
+                if (flipsAlreadyShown.contains(entry.getKey())) continue;
 
                 AtomicPrice price = entry.getValue();
                 int lowest = price.getLowestValue();
@@ -368,13 +335,8 @@ class BINSniper {
                     if(itemId.contains("|")) itemId = itemId.split("\\|")[0];
 
                     LazyObject itemObject = neuObject.has(itemId) ? (LazyObject) neuObject.get(itemId) : null;
-                    if (itemObject != null) {
-                      if (itemObject.has("sales")) {
-                        volume = (Long) itemObject.get("sales");
-                      } else if (itemObject.has("clean_sales")) {
-                        volume = (Long) itemObject.get("clean_sales");
-                      }
-                    }
+                    if (itemObject != null) if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
+                    else if (itemObject.has("clean_sales")) volume = (Long) itemObject.get("clean_sales");
 
                     Main.printDebug(
                         "NEU Volume for item: "
@@ -382,27 +344,24 @@ class BINSniper {
                             + " is "
                             + (volume == Long.MAX_VALUE ? "N/A" : volume));
 
-                    if (volume >= Config.MINIMUM_DAILY_SALES) {
-                      if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
-                        flips.add(entry);
-                      } else {
+                    if (volume >= Config.MINIMUM_DAILY_SALES)
+                      if (flips.size() < Config.MAX_FLIPS_TO_SHOW) flips.add(entry);
+                      else {
                         Map.Entry<String, AtomicPrice> first = flips.first();
                         AtomicPrice firstPrice = first.getValue();
-
+    
                         if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
                           flips.pollFirst();
                           flips.add(entry);
                         }
                       }
-                    }
                   }
                 }
               }
 
               long timeTaken = System.currentTimeMillis() - start;
-              if (flips.isEmpty()) {
-                System.out.println("Unable to find a flip after " + timeTaken + " ms.");
-              } else {
+              if (flips.isEmpty()) System.out.println("Unable to find a flip after " + timeTaken + " ms.");
+              else {
                 System.out.println("Found " + flips.size() + " flips in " + timeTaken + "ms:");
                 for (Map.Entry<String, AtomicPrice> entry : flips) {
                   flipsAlreadyShown.add(entry.getKey());
@@ -415,8 +374,8 @@ class BINSniper {
                   int secondWithTaxes = SBHelper.calculateWithTaxes(second);
 
                   int diff = secondWithTaxes - lowest;
-                  float profitPercentage =
-                      (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
+                  String profitPercentage =
+                      String.format("%.0f", (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100);
 
                   System.out.println("/viewauction " + price.getLowestKey());
                   System.out.println(
@@ -431,7 +390,7 @@ class BINSniper {
                           + " | Profit: "
                           + formatValue(diff)
                           + " (+"
-                          + (int) profitPercentage
+                          + profitPercentage
                           + "%)");
                   System.out.println();
                 }
@@ -460,9 +419,7 @@ class BINSniper {
                 iterativeTask =
                     Main.exec(() -> iterateResultsToClipboard(flips))
                         .thenRun(this::cleanupAuctionData);
-              } else {
-                cleanupAuctionData();
-              }
+              } else cleanupAuctionData();
             }
           }
         },
@@ -476,32 +433,22 @@ class BINSniper {
   }
 
   private static String formatValue(long amount) {
-    if (amount >= 1_000_000_000_000_000L) {
-      return formatValue(amount, 1_000_000_000_000_000L, 'q');
-    } else if (amount >= 1_000_000_000_000L) {
-      return formatValue(amount, 1_000_000_000_000L, 't');
-    } else if (amount >= 1_000_000_000L) {
-      return formatValue(amount, 1_000_000_000L, 'b');
-    } else if (amount >= 1_000_000L) {
-      return formatValue(amount, 1_000_000L, 'm');
-    } else if (amount >= 100_000L) {
-      return formatValue(amount, 1000L, 'k');
-    }
+    if (amount >= 1_000_000_000_000_000L) return formatValue(amount, 1_000_000_000_000_000L, 'q');
+    else if (amount >= 1_000_000_000_000L) return formatValue(amount, 1_000_000_000_000L, 't');
+    else if (amount >= 1_000_000_000L) return formatValue(amount, 1_000_000_000L, 'b');
+    else if (amount >= 1_000_000L) return formatValue(amount, 1_000_000L, 'm');
+    else if (amount >= 100_000L) return formatValue(amount, 1000L, 'k');
 
     return NumberFormat.getInstance().format(amount);
   }
 
   private void cleanupAuctionData() {
-    if (objectPool != null) {
-      binPrices.values().forEach(objectPool::offer);
-    }
+    if (objectPool != null) binPrices.values().forEach(objectPool::offer);
 
     binPrices.clear();
     totalBins.lazySet(0);
 
-    if (Config.EXPLICIT_GC_AFTER_FLIP) {
-      System.gc();
-    }
+    if (Config.EXPLICIT_GC_AFTER_FLIP) System.gc();
   }
 
   private void sendNotification(AtomicPrice best) {
@@ -540,8 +487,7 @@ class BINSniper {
 
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
-      if (!doingIterativeCopy.get())
-        return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
 
       String key = entry.getValue().getLowestKey();
 
@@ -573,8 +519,7 @@ class BINSniper {
       } catch (InterruptedException ignored) {
       }
 
-      if (!doingIterativeCopy.get())
-        return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
 
       finished++;
     }
@@ -583,9 +528,7 @@ class BINSniper {
   }
 
   private void sendSound() {
-    if (Config.SOUND_WHEN_FLIP_FOUND) {
-      Toolkit.getDefaultToolkit().beep();
-    }
+    if (Config.SOUND_WHEN_FLIP_FOUND) Toolkit.getDefaultToolkit().beep();
   }
 
   private void copyCommandToClipboard(String command) {
@@ -622,9 +565,7 @@ class BINSniper {
           "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36");
       connection.setRequestProperty("Content-Type", "application/json");
 
-      if (Config.USE_GZIP_COMPRESSION_ON_API_REQUESTS) {
-        connection.setRequestProperty("Accept-Encoding", "gzip");
-      }
+      if (Config.USE_GZIP_COMPRESSION_ON_API_REQUESTS) connection.setRequestProperty("Accept-Encoding", "gzip");
 
       if (Config.FORCE_NO_CACHE_API_REQUESTS) {
         connection.setRequestProperty("Cache-Control", "no-cache");
@@ -650,21 +591,16 @@ class BINSniper {
       }
 
       BufferedReader responseStreamReader;
-      if (connection.getContentEncoding().equalsIgnoreCase("gzip")) {
-        responseStreamReader =
-            new BufferedReader(
-                new InputStreamReader(new GZIPInputStream(connection.getInputStream())));
-      } else {
-        responseStreamReader =
-            new BufferedReader(new InputStreamReader(connection.getInputStream()));
-      }
+      if (connection.getContentEncoding().equalsIgnoreCase("gzip")) responseStreamReader =
+        new BufferedReader(
+          new InputStreamReader(new GZIPInputStream(connection.getInputStream())));
+      else responseStreamReader =
+        new BufferedReader(new InputStreamReader(connection.getInputStream()));
 
       StringBuilder response = new StringBuilder();
 
       int ch;
-      while ((ch = responseStreamReader.read()) != -1) {
-        response.append((char) ch);
-      }
+      while ((ch = responseStreamReader.read()) != -1) response.append((char) ch);
 
       responseStreamReader.close();
       connection.disconnect();
@@ -672,9 +608,7 @@ class BINSniper {
       LazyObject responseJsonObject = new LazyObject(response.toString());
 
       if (url.startsWith(Constants.AUCTIONS_ENDPOINT)) {
-        if (!responseJsonObject.getBoolean("success")) {
-          return null;
-        }
+        if (!responseJsonObject.getBoolean("success")) return null;
         long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
 
         if (timeLastUpdated > this.timeLastUpdated.get()) {
@@ -683,11 +617,9 @@ class BINSniper {
           totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
         }
         return responseJsonObject.getJSONArray("auctions");
-      } else if (url.startsWith(Constants.NOTENOUGHUPDATES_ENDPOINT)) {
-        return responseJsonObject;
-      } else {
+      } else if (url.startsWith(Constants.NOTENOUGHUPDATES_ENDPOINT)) return responseJsonObject;
+      else
         throw new IOException("Unknown endpoint: " + url);
-      }
 
     } catch (IOException e) {
       if (Config.OUTPUT_ERRORS) e.printStackTrace();
@@ -703,11 +635,8 @@ class BINSniper {
       lastClearableLength = clearable.length();
       StringBuilder output = new StringBuilder("\r").append(clearable);
 
-      if (lastClearable != -1 && lastClearable > lastClearableLength) {
-        for (int i = 0; i < lastClearable - lastClearableLength; i++) {
-          output.append(' ');
-        }
-      }
+      if (lastClearable != -1 && lastClearable > lastClearableLength)
+        for (int i = 0; i < lastClearable - lastClearableLength; i++) output.append(' ');
 
       System.out.print(output);
     }
@@ -729,15 +658,10 @@ class BINSniper {
       StringBuilder output = new StringBuilder("\r[");
 
       int segments = (int) Math.floor(progress * Config.LOADING_BAR_SEGMENTS);
-      for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++) {
-        if (i < segments - 1) {
-          output.append('=');
-        } else if (i == segments - 1) {
-          output.append('>');
-        } else {
-          output.append(' ');
-        }
-      }
+      for (int i = 0; i < Config.LOADING_BAR_SEGMENTS; i++)
+        if (i < segments - 1) output.append('=');
+        else if (i == segments - 1) output.append('>');
+        else output.append(' ');
 
       output
           .append("] ")
@@ -755,9 +679,7 @@ class BINSniper {
   private void clearChars(int amt) {
     synchronized (lock) {
       StringBuilder output = new StringBuilder("\r");
-      for (int i = 0; i < amt; i++) {
-        output.append(' ');
-      }
+      for (int i = 0; i < amt; i++) output.append(' ');
       output.append("\r");
 
       System.out.print(output);
@@ -765,8 +687,6 @@ class BINSniper {
   }
 
   void cleanup() {
-    if (SystemTray.isSupported() && notificationIcon != null) {
-      SystemTray.getSystemTray().remove(notificationIcon);
-    }
+    if (SystemTray.isSupported() && notificationIcon != null) SystemTray.getSystemTray().remove(notificationIcon);
   }
 }
