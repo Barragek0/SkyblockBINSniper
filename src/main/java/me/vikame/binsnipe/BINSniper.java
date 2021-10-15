@@ -367,7 +367,7 @@ class BINSniper {
                     String itemId = entry.getKey();
                     if(itemId.contains("|")) itemId = itemId.split("\\|")[0];
 
-                    LazyObject itemObject = (LazyObject) neuObject.get(itemId);
+                    LazyObject itemObject = neuObject.has(itemId) ? (LazyObject) neuObject.get(itemId) : null;
                     if (itemObject != null) {
                       if (itemObject.has("sales")) {
                         volume = (Long) itemObject.get("sales");
@@ -403,7 +403,7 @@ class BINSniper {
               if (flips.isEmpty()) {
                 System.out.println("Unable to find a flip after " + timeTaken + " ms.");
               } else {
-
+                System.out.println("Found " + flips.size() + " flips in " + timeTaken + "ms:");
                 for (Map.Entry<String, AtomicPrice> entry : flips) {
                   flipsAlreadyShown.add(entry.getKey());
 
@@ -432,9 +432,7 @@ class BINSniper {
                           + formatValue(diff)
                           + " (+"
                           + (int) profitPercentage
-                          + "%) ("
-                          + timeTaken
-                          + "ms)");
+                          + "%)");
                   System.out.println();
                 }
 
