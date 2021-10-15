@@ -180,9 +180,27 @@ class BINSniper {
                                   continue;
                                 }
 
-                                String itemId;
                                 String itemNameOriginal =
                                     SBHelper.stripInvalidChars(binData.getString("item_name"));
+
+                                boolean isBlacklisted = false;
+                                for (String blacklistItem : Config.BLACKLIST) {
+                                  if (Config.BLACKLIST_EXACT_MATCH
+                                      ? itemNameOriginal.equalsIgnoreCase(blacklistItem)
+                                      : itemNameOriginal.toLowerCase()
+                                          .contains(blacklistItem.toLowerCase())) {
+                                    isBlacklisted = true;
+                                    break;
+                                  }
+                                }
+
+                                if(isBlacklisted) {
+                                  Main.printDebug(itemNameOriginal + " is blacklisted.");
+                                  continue;
+                                }
+
+
+                                String itemId;
                                 StringBuilder itemName = new StringBuilder(itemNameOriginal);
 
                                 try {
@@ -328,20 +346,6 @@ class BINSniper {
                             + "' ("
                             + entry.getValue().getLowestItemNameFormatted()
                             + ")");
-                    boolean itemOnBlacklist = false;
-
-                    for (String blacklistItem : Config.BLACKLIST) {
-                      if (Config.BLACKLIST_EXACT_MATCH
-                          ? price.getLowestItemNameOriginal().equalsIgnoreCase(blacklistItem)
-                          : price
-                              .getLowestItemNameOriginal()
-                              .toLowerCase()
-                              .contains(blacklistItem)) {
-                        Main.printDebug(price.getLowestItemNameFormatted() + " is blacklisted.");
-                        itemOnBlacklist = true;
-                        break;
-                      }
-                    }
 
                     long neuVolume = -1;
                     try {
@@ -371,7 +375,7 @@ class BINSniper {
                             + " is "
                             + (neuVolume == Long.MAX_VALUE ? "N/A" : neuVolume));
 
-                    if (!itemOnBlacklist && neuVolume >= Config.MINIMUM_DAILY_SALES) {
+                    if (neuVolume >= Config.MINIMUM_DAILY_SALES) {
                       if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
                       } else {
