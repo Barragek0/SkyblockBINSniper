@@ -142,4 +142,37 @@ public class ConfigFile {
     }
   }
 
+  public void save() throws IOException {
+    Properties properties = new Properties();
+
+    for (Field field : Config.class.getDeclaredFields()) {
+      if (!field.isAccessible())
+        field.setAccessible(true);
+
+      Object value;
+      try {
+        value = field.get(null);
+      } catch (IllegalAccessException e) {
+        if(Config.OUTPUT_ERRORS) e.printStackTrace();
+        continue;
+      }
+
+      Parser parser = getParser(field.getType());
+      if (parser == null) {
+        System.out.println("No parser for type " + field.getType() + "!");
+        continue;
+      }
+
+      if (!Modifier.isTransient(field.getModifiers())) {
+        //noinspection unchecked
+        String stringValue = parser.toString(value);
+        properties.setProperty(field.getName(), stringValue);
+      }
+    }
+
+    FileWriter writer = new FileWriter(configFile);
+    properties.store(writer, "Skyblock BIN Sniper configuration data");
+    writer.close();
+  }
+
 }

@@ -11,6 +11,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import me.vikame.binsnipe.command.CommandParser;
 import me.vikame.binsnipe.config.ConfigFile;
 import me.vikame.binsnipe.util.KeyboardListener;
 import org.jnativehook.GlobalScreen;
@@ -23,6 +24,7 @@ import org.jnativehook.NativeHookException;
 public class Main {
 
   private static ScheduledExecutorService THREAD_POOL;
+  public static ConfigFile config;
 
   public static void main(String[] args) throws IOException, NativeHookException {
     Console console = System.console();
@@ -63,7 +65,7 @@ public class Main {
     } else {
       System.setErr(System.out);
 
-      ConfigFile config = new ConfigFile(new File(System.getProperty("user.dir"), "BINSniper.config"));
+      config = new ConfigFile(new File(System.getProperty("user.dir"), "BINSniper.config"));
       config.load();
 
       THREAD_POOL = Executors.newScheduledThreadPool(Config.POOLED_THREAD_COUNT);
@@ -97,6 +99,12 @@ public class Main {
                   }));
 
       System.out.println();
+
+      // This should never occur, but just in-case!
+      if(console != null) {
+        CommandParser commandParser = new CommandParser(console);
+        commandParser.start();
+      }
     }
   }
 
