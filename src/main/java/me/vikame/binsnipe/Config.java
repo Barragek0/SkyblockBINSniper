@@ -117,6 +117,12 @@ public class Config {
   // The minimum amount of sales the item needs to have per day to be considered as a flip. (Using NotEnoughUpdates API)
   static int MINIMUM_DAILY_SALES = 5;
 
+  /* The rate in which we check for API updates, in milliseconds. Setting this value too low can put a
+   * large load on your network, and could also get you blocked from the Hypixel API, so we enforce a
+   * minimum of 500ms.
+   */
+  static long UPDATE_CHECK_RATE = 1000;
+
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.
   static transient int LOADING_BAR_SEGMENTS = 40;

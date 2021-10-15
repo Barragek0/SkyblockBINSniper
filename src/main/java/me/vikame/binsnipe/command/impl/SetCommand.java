@@ -25,8 +25,8 @@ public class SetCommand extends Command {
     String fieldName = key.toUpperCase().replace(" ", "_");
     String value = args[args.length-1];
 
-    if(fieldName.equals("POOLED_THREAD_COUNT")) {
-      System.out.println("You cannot change POOLED_THREAD_COUNT at runtime.");
+    if(fieldName.equals("POOLED_THREAD_COUNT") || fieldName.equals("UPDATE_CHECK_RATE")) {
+      System.out.println("You cannot change " + fieldName + " at runtime.");
       System.out.println("Please change this value in the configuration file!");
       return;
     }

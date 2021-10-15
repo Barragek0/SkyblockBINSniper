@@ -467,7 +467,7 @@ class BINSniper {
           }
         },
         0,
-        1000,
+        Config.UPDATE_CHECK_RATE,
         TimeUnit.MILLISECONDS);
   }
 
