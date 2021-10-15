@@ -374,8 +374,7 @@ class BINSniper {
                   int secondWithTaxes = SBHelper.calculateWithTaxes(second);
 
                   int diff = secondWithTaxes - lowest;
-                  String profitPercentage =
-                      String.format("%.0f", (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100);
+                  int profitPercentage = (int) (((double) secondWithTaxes / (double) lowest) * 100) - 100;
 
                   System.out.println("/viewauction " + price.getLowestKey());
                   System.out.println(
