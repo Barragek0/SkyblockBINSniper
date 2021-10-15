@@ -1,8 +1,14 @@
 package me.vikame.binsnipe;
 
-import java.awt.SystemTray;
+import java.awt.*;
+import java.util.Arrays;
+import java.util.LinkedList;
+import java.util.List;
 
 public class Config {
+
+  // Whether to output errors to the console or not
+  static boolean OUTPUT_ERRORS = false;
 
   // The number of threads to use for making API requests, and parsing auction data, when finding
   // flips.
@@ -44,7 +50,7 @@ public class Config {
   static boolean IGNORE_USED_CAKE_SOULS = true;
 
   // Whether to treat all "dungeonizable" items as if they were starless.
-  public static boolean IGNORE_STARS = true;
+  static boolean IGNORE_STARS = true;
 
   // Whether to treat all reforgeable items the same regardless of applied reforge.
   static boolean IGNORE_REFORGES = true;
@@ -101,6 +107,18 @@ public class Config {
    * Much easier than copying each command manually if you want to check more than one result.
    */
   static boolean ITERATE_RESULTS_TO_CLIPBOARD = true;
+
+  /* List of item names that are 'blacklisted' and won't be added to the list of flips.
+   */
+  static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap", "null"));
+
+  /* Blacklist names need to match the exact item name.
+   */
+  static boolean BLACKLIST_EXACT_MATCH = true;
+
+  /* The minimum amount of sales the item needs to have per day to be considered as a flip. (Using NotEnoughUpdates API)
+   */
+  static int MINIMUM_DAILY_SALES = 5;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
   // progress.

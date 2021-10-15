@@ -1,11 +1,12 @@
 package me.vikame.binsnipe;
 
-import java.awt.GraphicsEnvironment;
-import java.io.Console;
-import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
-import java.io.IOException;
+import me.vikame.binsnipe.util.KeyboardListener;
+import me.vikame.binsnipe.util.PrimitiveHelper;
+import org.jnativehook.GlobalScreen;
+import org.jnativehook.NativeHookException;
+
+import java.awt.*;
+import java.io.*;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.text.NumberFormat;
@@ -16,10 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.PrimitiveHelper;
-import org.jnativehook.GlobalScreen;
-import org.jnativehook.NativeHookException;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /* A (hopefully) simple to use BIN sniper for Hypixel Skyblock.
  *
@@ -79,10 +78,20 @@ public class Main {
           System.out.println("Configuration:");
 
           for (Field field : Config.class.getDeclaredFields()) {
-            if (!properties.containsKey(field.getName())) {
-              continue;
+            if (!properties.containsKey(field.getName())
+                && !Modifier.isTransient(field.getModifiers())) {
+              properties.setProperty(
+                  field.getName(),
+                  field.getType().equals(boolean.class)
+                          || field.getType().equals(int.class)
+                          || field.getType().equals(long.class)
+                          || field.getType().equals(float.class)
+                      ? String.valueOf(field.get(Main.class))
+                      : field.getType().equals(java.util.List.class)
+                          ? String.join(",", (java.util.List) field.get(Main.class))
+                          : "");
+              properties.store(new FileOutputStream(config), null);
             }
-
             try {
               String prop = properties.getProperty(field.getName());
 
@@ -95,8 +104,15 @@ public class Main {
                 field.set(null, Float.parseFloat(prop.replace(",", "")));
               } else if (type == Long.class) {
                 field.set(null, Long.parseLong(prop.replace(",", "")));
+              } else if (type == java.util.List.class) {
+                field.set(null, Stream.of(prop.split(",", -1)).collect(Collectors.toList()));
               } else {
-                System.out.println("Could not parse data type for " + field.getName() + ".");
+                System.out.println(
+                    "Could not parse data type for "
+                        + field.getName()
+                        + " with type "
+                        + field.getType()
+                        + ".");
                 continue;
               }
 
@@ -112,7 +128,7 @@ public class Main {
           }
 
           reader.close();
-        } catch (IOException e) {
+        } catch (IOException | IllegalAccessException e) {
           e.printStackTrace();
           System.out.println("Failed to read configuration data. Using defaults...");
         }

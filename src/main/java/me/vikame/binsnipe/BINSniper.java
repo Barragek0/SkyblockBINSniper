@@ -1,9 +1,15 @@
 package me.vikame.binsnipe;
 
-import java.awt.AWTException;
-import java.awt.SystemTray;
-import java.awt.Toolkit;
-import java.awt.TrayIcon;
+import me.doubledutch.lazyjson.LazyArray;
+import me.doubledutch.lazyjson.LazyElement;
+import me.doubledutch.lazyjson.LazyObject;
+import me.nullicorn.nedit.NBTReader;
+import me.nullicorn.nedit.type.NBTCompound;
+import me.vikame.binsnipe.util.*;
+import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
 import java.awt.TrayIcon.MessageType;
 import java.awt.datatransfer.StringSelection;
 import java.awt.image.BufferedImage;
@@ -19,26 +25,11 @@ import java.text.NumberFormat;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeSet;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.zip.GZIPInputStream;
-import javax.imageio.ImageIO;
-import me.doubledutch.lazyjson.LazyArray;
-import me.doubledutch.lazyjson.LazyObject;
-import me.nullicorn.nedit.NBTReader;
-import me.nullicorn.nedit.type.NBTCompound;
-import me.vikame.binsnipe.util.AtomicPrice;
-import me.vikame.binsnipe.util.AtomicPrice.UnboundedAtomicPricePool;
-import me.vikame.binsnipe.util.ExpiringSet;
-import me.vikame.binsnipe.util.KeyboardListener;
-import me.vikame.binsnipe.util.SBHelper;
-import me.vikame.binsnipe.util.UnboundedObjectPool;
 
 class BINSniper {
 
@@ -103,24 +94,25 @@ class BINSniper {
       } catch (AssertionError | IOException e) {
         image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB);
         System.err.println("Failed to find icon! Defaulting to blank icon...");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
       }
 
       notificationIcon = new TrayIcon(image, "BIN Sniper");
       notificationIcon.setImageAutoSize(true);
     } else {
-      this.notificationIcon = null;
+      notificationIcon = null;
     }
 
     doingIterativeCopy = new AtomicBoolean(false);
 
     // Make an API request to get initial data before the sniper starts.
-    getAuctions(0);
+    getResultsFromEndpoint(Constants.AUCTIONS_ENDPOINT, 0);
 
     Main.schedule(
         () -> {
           long lastUpdateTime = timeLastUpdated.get();
           if ((System.currentTimeMillis() - lastUpdateTime) > 60000) {
-            getAuctions(0);
+            getResultsFromEndpoint(Constants.AUCTIONS_ENDPOINT, 0);
             long newUpdateTime = timeLastUpdated.get();
             long actualDelay = System.currentTimeMillis() - newUpdateTime;
 
@@ -132,31 +124,32 @@ class BINSniper {
                 clearString();
                 doingIterativeCopy.set(false);
                 iterativeTask.cancel(true);
-                KeyboardListener.pasteCallback.run(); // HACK: Interrupt the indefinite sleep in the iterative copy task!
+                // HACK: Interrupt the indefinite sleep in the iterative copy task!
+                KeyboardListener.pasteCallback.run();
                 System.out.println(
                     "Commands were not pasted before we started a new flip attempt.");
               }
 
               AtomicInteger completed = new AtomicInteger(0);
-              final int maxPages = totalPages.get();
+              int maxPages = totalPages.get();
 
               System.out.println();
               printLoadingBar(0, maxPages);
 
-              // noinspection rawtypes: We will only store CompletableFuture<Void> in this array.
               CompletableFuture[] futures = new CompletableFuture[maxPages];
 
               long start = System.currentTimeMillis();
               for (int page = 0; page < maxPages; page++) {
-                final int workingPage = page;
+                int workingPage = page;
                 CompletableFuture<Void> future =
                     Main.exec(
                         () -> {
                           // Ensure that this is still a valid page we need to look at.
                           if (workingPage < totalPages.get()) {
-                            LazyArray auctionArray = getAuctions(workingPage);
-
-                            Main.printDebug("Got page " + workingPage + " from API.");
+                            LazyArray auctionArray =
+                                (LazyArray)
+                                    getResultsFromEndpoint(
+                                        Constants.AUCTIONS_ENDPOINT, workingPage);
 
                             if (auctionArray != null) {
                               long pageStart = System.currentTimeMillis();
@@ -178,9 +171,9 @@ class BINSniper {
                                 }
 
                                 String itemId;
-                                StringBuilder itemName =
-                                    new StringBuilder(
-                                        SBHelper.stripInvalidChars(binData.getString("item_name")));
+                                String itemNameOriginal =
+                                    SBHelper.stripInvalidChars(binData.getString("item_name"));
+                                StringBuilder itemName = new StringBuilder(itemNameOriginal);
 
                                 try {
                                   NBTCompound itemData =
@@ -243,7 +236,7 @@ class BINSniper {
                                     itemName.append(" [").append(skin).append("]");
                                   }
                                 } catch (Exception e) {
-                                  e.printStackTrace();
+                                  if (Config.OUTPUT_ERRORS) e.printStackTrace();
                                   continue;
                                 }
 
@@ -256,18 +249,24 @@ class BINSniper {
 
                                 binPrices
                                     .computeIfAbsent(itemId, ign -> createAtomicPrice())
-                                    .tryUpdatePrice(filteredName, binData);
+                                    .tryUpdatePrice(filteredName, itemNameOriginal, binData);
                                 totalBins.incrementAndGet();
                               }
 
                               long pageEnd = System.currentTimeMillis();
 
-                              Main.printDebug("Parsed page " + workingPage + " in " + (pageEnd - pageStart) + "ms.");
+                              Main.printDebug(
+                                  "Parsed page "
+                                      + workingPage
+                                      + " in "
+                                      + (pageEnd - pageStart)
+                                      + "ms.");
                             }
                           }
                         });
 
-                futures[workingPage] = future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
+                futures[workingPage] =
+                    future.thenRun(() -> printLoadingBar(completed.incrementAndGet(), maxPages));
               }
 
               CompletableFuture<Void> all = CompletableFuture.allOf(futures);
@@ -279,6 +278,7 @@ class BINSniper {
                 System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
                 System.out.println("This may be due to your internet connection being slow, or");
                 System.out.println("the Hypixel API may be responding slowly.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
                 return;
               }
 
@@ -288,6 +288,9 @@ class BINSniper {
 
               TreeSet<Map.Entry<String, AtomicPrice>> flips =
                   new TreeSet<>(Comparator.comparingInt(o -> o.getValue().getProjectedProfit()));
+
+              LazyObject neuObject =
+                  (LazyObject) getResultsFromEndpoint(Constants.NOTENOUGHUPDATES_ENDPOINT, 0);
 
               for (Map.Entry<String, AtomicPrice> entry : binPrices.entrySet()) {
                 if (flipsAlreadyShown.contains(entry.getKey())) {
@@ -313,27 +316,85 @@ class BINSniper {
                         "Found flippable item '"
                             + entry.getKey()
                             + "' ("
-                            + entry.getValue().getLowestItemName()
+                            + entry.getValue().getLowestItemNameFormatted()
                             + ")");
-                    if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
-                      flips.add(entry);
-                    } else {
-                      Map.Entry<String, AtomicPrice> first = flips.first();
-                      AtomicPrice firstPrice = first.getValue();
+                    boolean itemOnBlacklist = false;
 
-                      if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
-                        flips.pollFirst();
+                    for (String blacklistItem : Config.BLACKLIST) {
+                      if (Config.BLACKLIST_EXACT_MATCH
+                          ? price.getLowestItemNameOriginal().equalsIgnoreCase(blacklistItem)
+                          : price
+                              .getLowestItemNameOriginal()
+                              .toLowerCase()
+                              .contains(blacklistItem)) {
+                        Main.printDebug(price.getLowestItemNameFormatted() + " is blacklisted.");
+                        itemOnBlacklist = true;
+                        break;
+                      }
+                    }
+
+                    long neuVolume = -1;
+                    try {
+                      LazyObject itemObject = (LazyObject) neuObject.get(entry.getKey());
+                      if (itemObject != null) {
+                        long volume = -1;
+                        if (itemObject.has("sales")) volume = (Long) itemObject.get("sales");
+                        else if (itemObject.has("clean_sales"))
+                          volume = (Long) itemObject.get("clean_sales");
+                        else {
+                          Main.printDebug(
+                              "Couldn't find AH Sales for " + entry.getKey() + " in NEU API JSON");
+                          // Set the volume to max value if the item can't be found in the NEU API.
+                          volume = Long.MAX_VALUE;
+                        }
+                        if (volume != -1) neuVolume = volume;
+                      }
+                    } catch (Throwable e) {
+                      Main.printDebug(
+                          "Error parsing JSON for entry " + entry.getKey() + " from NEU API:");
+                      if (Config.OUTPUT_ERRORS) e.printStackTrace();
+                    }
+
+                    Main.printDebug(
+                        "NEU Volume for item: "
+                            + entry.getKey()
+                            + " is "
+                            + (neuVolume == Long.MAX_VALUE ? "N/A" : neuVolume));
+
+                    if (!itemOnBlacklist && neuVolume >= Config.MINIMUM_DAILY_SALES) {
+                      if (flips.size() < Config.MAX_FLIPS_TO_SHOW) {
                         flips.add(entry);
+                      } else {
+                        Map.Entry<String, AtomicPrice> first = flips.first();
+                        AtomicPrice firstPrice = first.getValue();
+
+                        if (firstPrice.getProjectedProfit() < price.getProjectedProfit()) {
+                          flips.pollFirst();
+                          flips.add(entry);
+                        }
                       }
                     }
                   }
                 }
               }
 
+              try {
+                all.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+              } catch (InterruptedException | ExecutionException | TimeoutException e) {
+                all.cancel(true);
+                clearString();
+                System.out.println("Could not retrieve all auctions from the Hypixel API in time!");
+                System.out.println("This may be due to your internet connection being slow, or");
+                System.out.println("the Hypixel API may be responding slowly.");
+                if (Config.OUTPUT_ERRORS) e.printStackTrace();
+                return;
+              }
+
               long timeTaken = System.currentTimeMillis() - start;
               if (flips.isEmpty()) {
                 System.out.println("Unable to find a flip after " + timeTaken + " ms.");
               } else {
+
                 for (Map.Entry<String, AtomicPrice> entry : flips) {
                   flipsAlreadyShown.add(entry.getKey());
 
@@ -348,11 +409,10 @@ class BINSniper {
                   float profitPercentage =
                       (((float) secondWithTaxes / (float) lowest) * 100.0f) - 100;
 
+                  System.out.println("/viewauction " + price.getLowestKey());
                   System.out.println(
-                      "/viewauction "
-                          + price.getLowestKey()
-                          + " | Item: "
-                          + price.getLowestItemName()
+                      " -> Item: "
+                          + price.getLowestItemNameFormatted()
                           + " | Volume: "
                           + price.getTotalCount()
                           + " | Price: "
@@ -362,10 +422,11 @@ class BINSniper {
                           + " | Profit: "
                           + formatValue(diff)
                           + " (+"
-                          + PRINT_FORMAT.format(profitPercentage)
+                          + (int) profitPercentage
                           + "%) ("
                           + timeTaken
                           + "ms)");
+                  System.out.println();
                 }
 
                 AtomicPrice best = flips.last().getValue();
@@ -403,11 +464,11 @@ class BINSniper {
         TimeUnit.MILLISECONDS);
   }
 
-  private static String formatValue(final long amount, final long div, final char suffix) {
+  private static String formatValue(long amount, long div, char suffix) {
     return PRINT_FORMAT.format(amount / (double) div) + suffix;
   }
 
-  private static String formatValue(final long amount) {
+  private static String formatValue(long amount) {
     if (amount >= 1_000_000_000_000_000L) {
       return formatValue(amount, 1_000_000_000_000_000L, 'q');
     } else if (amount >= 1_000_000_000_000L) {
@@ -444,10 +505,11 @@ class BINSniper {
       } catch (AWTException e) {
         e.printStackTrace();
         System.err.println("Failed to initialize notification system.");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
       }
 
       notificationIcon.displayMessage(
-          best.getLowestItemName() + " (Volume: " + best.getTotalCount() + ")",
+          best.getLowestItemNameFormatted() + " (Volume: " + best.getTotalCount() + ")",
           "Price: "
               + NumberFormat.getInstance().format(best.getLowestValue())
               + "\n"
@@ -463,7 +525,7 @@ class BINSniper {
     }
   }
 
-  private void iterateResultsToClipboard(final TreeSet<Map.Entry<String, AtomicPrice>> flips) {
+  private void iterateResultsToClipboard(TreeSet<Map.Entry<String, AtomicPrice>> flips) {
     System.out.println();
 
     int finished = 0;
@@ -471,7 +533,8 @@ class BINSniper {
 
     // iterate from most profit to least
     for (Map.Entry<String, AtomicPrice> entry : flips.descendingSet()) {
-      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get())
+        return; // Exit early if we have been told to stop doing the iterative copy.
 
       String key = entry.getValue().getLowestKey();
 
@@ -503,7 +566,8 @@ class BINSniper {
       } catch (InterruptedException ignored) {
       }
 
-      if(!doingIterativeCopy.get()) return; // Exit early if we have been told to stop doing the iterative copy.
+      if (!doingIterativeCopy.get())
+        return; // Exit early if we have been told to stop doing the iterative copy.
 
       finished++;
     }
@@ -527,18 +591,18 @@ class BINSniper {
     return objectPool != null ? objectPool.borrow() : new AtomicPrice();
   }
 
-  private LazyArray getAuctions(int page) {
-    String targetURL =
-        Constants.AUCTIONS_ENDPOINT
+  private LazyElement getResultsFromEndpoint(String url, int page) {
+    url =
+        url
             + "?page="
             + page
             + (Config.FORCE_NO_CACHE_API_REQUESTS ? "&_=" + System.currentTimeMillis() : "");
     URL apiURL;
     try {
-      apiURL = new URL(targetURL);
+      apiURL = new URL(url);
     } catch (MalformedURLException e) {
-      e.printStackTrace();
-      System.err.println("Malformed URL '" + targetURL + "'");
+      System.err.println("Malformed URL '" + url + "'");
+      if (Config.OUTPUT_ERRORS) e.printStackTrace();
       System.exit(1);
       return null;
     }
@@ -564,11 +628,11 @@ class BINSniper {
       try {
         connection.connect();
       } catch (IOException e) {
-        e.printStackTrace();
-        System.err.println("Failed to connect to " + targetURL + ": " + e.getMessage());
+        System.err.println("Failed to connect to " + url + ": " + e.getMessage());
         System.err.println("This may be due to your firewall, or anti-virus software.");
         System.err.println(
             "Please ensure that the Java Virtual Machine is able to access the internet.");
+        if (Config.OUTPUT_ERRORS) e.printStackTrace();
         return null;
       }
 
@@ -599,24 +663,29 @@ class BINSniper {
       connection.disconnect();
 
       LazyObject responseJsonObject = new LazyObject(response.toString());
-      if (!responseJsonObject.getBoolean("success")) {
-        return null;
+
+      if (url.startsWith(Constants.AUCTIONS_ENDPOINT)) {
+        if (!responseJsonObject.getBoolean("success")) {
+          return null;
+        }
+        long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
+
+        if (timeLastUpdated > this.timeLastUpdated.get()) {
+          this.timeLastUpdated.set(timeLastUpdated);
+          totalPages.set(responseJsonObject.getInt("totalPages"));
+          totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
+        }
+        return responseJsonObject.getJSONArray("auctions");
+      } else if (url.startsWith(Constants.NOTENOUGHUPDATES_ENDPOINT)) {
+        return responseJsonObject;
+      } else {
+        throw new IOException("Unknown endpoint: " + url);
       }
 
-      long timeLastUpdated = responseJsonObject.getLong("lastUpdated");
-
-      if (timeLastUpdated > this.timeLastUpdated.get()) {
-        this.timeLastUpdated.set(timeLastUpdated);
-        this.totalPages.set(responseJsonObject.getInt("totalPages"));
-        this.totalAuctions.set(responseJsonObject.getInt("totalAuctions"));
-      }
-
-      return responseJsonObject.getJSONArray("auctions");
     } catch (IOException e) {
-      e.printStackTrace();
+      if (Config.OUTPUT_ERRORS) e.printStackTrace();
       System.exit(1);
     }
-
     return null;
   }
 

@@ -1,9 +1,10 @@
 package me.vikame.binsnipe.util;
 
+import me.doubledutch.lazyjson.LazyObject;
+
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
-import me.doubledutch.lazyjson.LazyObject;
 
 public class AtomicPrice {
 
@@ -14,7 +15,8 @@ public class AtomicPrice {
    * information, but I believe there is plenty of room for improvement.
    */
 
-  private final AtomicReference<String> lowestItemName;
+  private final AtomicReference<String> lowestItemNameFormatted;
+  private final AtomicReference<String> lowestItemNameOriginal;
   private final AtomicReference<String> lowestKey;
   private final AtomicInteger lowestValue;
   private final AtomicLong lowestElapsedTime;
@@ -22,24 +24,26 @@ public class AtomicPrice {
   private final AtomicInteger totalCount;
 
   public AtomicPrice() {
-    this.lowestItemName = new AtomicReference<>();
-    this.lowestKey = new AtomicReference<>();
-    this.lowestValue = new AtomicInteger(-1);
-    this.lowestElapsedTime = new AtomicLong(-1);
-    this.secondLowestValue = new AtomicInteger(-1);
-    this.totalCount = new AtomicInteger(0);
+    lowestItemNameFormatted = new AtomicReference<>();
+    lowestItemNameOriginal = new AtomicReference<>();
+    lowestKey = new AtomicReference<>();
+    lowestValue = new AtomicInteger(-1);
+    lowestElapsedTime = new AtomicLong(-1);
+    secondLowestValue = new AtomicInteger(-1);
+    totalCount = new AtomicInteger(0);
   }
 
-  public void reset() {
-    this.lowestItemName.lazySet(null);
-    this.lowestKey.lazySet(null);
-    this.lowestValue.lazySet(-1);
-    this.lowestElapsedTime.lazySet(-1);
-    this.secondLowestValue.lazySet(-1);
-    this.totalCount.lazySet(0);
+  void reset() {
+    lowestItemNameFormatted.lazySet(null);
+    lowestItemNameOriginal.lazySet(null);
+    lowestKey.lazySet(null);
+    lowestValue.lazySet(-1);
+    lowestElapsedTime.lazySet(-1);
+    secondLowestValue.lazySet(-1);
+    totalCount.lazySet(0);
   }
 
-  public void tryUpdatePrice(String itemName, LazyObject binData) {
+  public void tryUpdatePrice(String itemName, String itemNameOriginal, LazyObject binData) {
     long elapsed = System.currentTimeMillis() - binData.getLong("start");
     String id = binData.getString("uuid");
     int newPrice = binData.getInt("starting_bid");
@@ -50,7 +54,8 @@ public class AtomicPrice {
     if (lowest == -1 || newPrice < lowest) {
       secondLowestValue.set(lowest);
 
-      lowestItemName.set(itemName);
+      lowestItemNameFormatted.set(itemName);
+      lowestItemNameOriginal.set(itemNameOriginal);
       lowestElapsedTime.set(elapsed);
       lowestKey.set(id);
       lowestValue.set(newPrice);
@@ -65,8 +70,12 @@ public class AtomicPrice {
     return totalCount.get();
   }
 
-  public String getLowestItemName() {
-    return lowestItemName.get();
+  public String getLowestItemNameFormatted() {
+    return lowestItemNameFormatted.get();
+  }
+
+  public String getLowestItemNameOriginal() {
+    return lowestItemNameOriginal.get();
   }
 
   public String getLowestKey() {
@@ -106,5 +115,4 @@ public class AtomicPrice {
       return new AtomicPrice();
     }
   }
-
 }

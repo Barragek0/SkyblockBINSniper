@@ -21,8 +21,6 @@ public class PrimitiveHelper {
     PRIMITIVES_TO_WRAPPERS.put(void.class, Void.class);
   }
 
-
-  @SuppressWarnings("unchecked")
   public static <T> Class<T> wrap(Class<T> c) {
     if (c.isArray()) {
       Class<?> wrappedArrayType = wrap(c.getComponentType());
@@ -32,5 +30,4 @@ public class PrimitiveHelper {
 
     return c.isPrimitive() ? (Class<T>) PRIMITIVES_TO_WRAPPERS.get(c) : c;
   }
-
 }

@@ -6,7 +6,7 @@
 
     <groupId>me.vikame</groupId>
     <artifactId>SkyblockBINSniper</artifactId>
-    <version>1.8</version>
+    <version>1.9</version>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -35,7 +35,8 @@
                         </goals>
                         <configuration>
                             <transformers>
-                                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                <transformer
+                                        implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>me.vikame.binsnipe.Main</mainClass>
                                 </transformer>
                             </transformers>
@@ -58,6 +59,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>2.10.0</version>
+        </dependency>
+        <dependency>
             <groupId>me.doubledutch</groupId>
             <artifactId>lazyjson</artifactId>
             <version>2.3.2</version>
@@ -73,5 +79,5 @@
             <version>2.1.0</version>
         </dependency>
     </dependencies>
-    
+
 </project>
