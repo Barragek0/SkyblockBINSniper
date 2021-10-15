@@ -1,14 +1,13 @@
 package me.vikame.binsnipe;
 
-import java.awt.*;
-import java.util.Arrays;
-import java.util.LinkedList;
-import java.util.List;
+import java.awt.SystemTray;
 
 public class Config {
 
+  // NOTE: This config does not support generic-typed collections such as List<String> and instead requires the use of arrays in their place.
+
   // Whether to output errors to the console or not
-  static boolean OUTPUT_ERRORS = false;
+  public static boolean OUTPUT_ERRORS = false;
 
   // The number of threads to use for making API requests, and parsing auction data, when finding
   // flips.
@@ -110,14 +109,12 @@ public class Config {
 
   /* List of item names that are 'blacklisted' and won't be added to the list of flips.
    */
-  static List<String> BLACKLIST = new LinkedList<>(Arrays.asList("Decoy", "Trap", "null"));
+  static String[] BLACKLIST = new String[] {"Decoy", "Trap", "null"};
 
-  /* Blacklist names need to match the exact item name.
-   */
+  // Blacklist names need to match the exact item name.
   static boolean BLACKLIST_EXACT_MATCH = true;
 
-  /* The minimum amount of sales the item needs to have per day to be considered as a flip. (Using NotEnoughUpdates API)
-   */
+  // The minimum amount of sales the item needs to have per day to be considered as a flip. (Using NotEnoughUpdates API)
   static int MINIMUM_DAILY_SALES = 5;
 
   // The number of segments to a console-based loading bar used when displaying current BIN snipe
