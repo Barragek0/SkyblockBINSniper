@@ -316,7 +316,7 @@ class BINSniper {
               }
               LazyObject neuObject;
               try {
-                neuObject = neuFuture.get(Config.TIMEOUT, TimeUnit.MILLISECONDS);
+                neuObject = neuFuture.get(Config.API_TIMEOUT, TimeUnit.MILLISECONDS);
               } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 neuFuture.cancel(true);
                 clearString();
