@@ -12,10 +12,13 @@ public class Config {
   // The number of threads to use for making API requests, and parsing auction data, when finding
   // flips.
   static int POOLED_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
-
+  
   // The maximum time, in milliseconds, that is allowed to pass before we determine a snipe attempt
   // to be dead.
-  static long TIMEOUT = 10000;
+  static int ATTEMPT_TIMEOUT = 15000;
+  
+  // The maximum time, in milliseconds, that is allowed to pass before we determine the api to be offline.
+  static int API_TIMEOUT = 5000;
 
   // Whether to play a sound when a flip has been found.
   static boolean SOUND_WHEN_FLIP_FOUND = !SystemTray.isSupported();
