@@ -18,7 +18,7 @@ public class Config {
   static int ATTEMPT_TIMEOUT = 20000;
   
   // The maximum time, in milliseconds, that is allowed to pass before we determine the api to be offline.
-  static int API_TIMEOUT = 5000;
+  static int API_TIMEOUT = 10000;
 
   // Whether to play a sound when a flip has been found.
   static boolean SOUND_WHEN_FLIP_FOUND = !SystemTray.isSupported();
