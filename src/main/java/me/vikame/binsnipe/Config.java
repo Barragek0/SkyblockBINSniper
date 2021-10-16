@@ -15,7 +15,7 @@ public class Config {
   
   // The maximum time, in milliseconds, that is allowed to pass before we determine a snipe attempt
   // to be dead.
-  static int ATTEMPT_TIMEOUT = 15000;
+  static int ATTEMPT_TIMEOUT = 20000;
   
   // The maximum time, in milliseconds, that is allowed to pass before we determine the api to be offline.
   static int API_TIMEOUT = 5000;
