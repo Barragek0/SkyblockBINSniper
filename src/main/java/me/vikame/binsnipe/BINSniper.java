@@ -648,7 +648,7 @@ class BINSniper {
         connection.connect();
       } catch (IOException e) {
         System.err.println("Failed to connect to " + url + ": " + e.getMessage());
-        System.err.println("This may be due to your firewall, or anti-virus software.");
+        System.err.println("This may be due to your firewall, anti-virus software or because the requested website is experiencing issues.");
         System.err.println(
             "Please ensure that the Java Virtual Machine is able to access the internet.");
         if (Config.OUTPUT_ERRORS) {
