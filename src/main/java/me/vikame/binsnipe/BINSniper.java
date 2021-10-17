@@ -295,7 +295,7 @@ class BINSniper {
 
               CompletableFuture<Void> all = CompletableFuture.allOf(futures);
               try {
-                all.get(Config.ATTEMPT_TIMEOUT, TimeUnit.MILLISECONDS);
+                all.get(Config.HYPIXEL_API_TIMEOUT, TimeUnit.MILLISECONDS);
               } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 all.cancel(true);
                 clearString();
@@ -316,7 +316,7 @@ class BINSniper {
               }
               LazyObject neuObject;
               try {
-                neuObject = neuFuture.get(Config.API_TIMEOUT, TimeUnit.MILLISECONDS);
+                neuObject = neuFuture.get(Config.NEU_API_TIMEOUT, TimeUnit.MILLISECONDS);
               } catch (InterruptedException | ExecutionException | TimeoutException e) {
                 neuFuture.cancel(true);
                 clearString();
@@ -630,8 +630,8 @@ class BINSniper {
           "User-Agent",
           "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/47.0.2526.106 Safari/537.36");
       connection.setRequestProperty("Content-Type", "application/json");
-      connection.setConnectTimeout(Config.API_TIMEOUT);
-      connection.setReadTimeout(Config.API_TIMEOUT);
+      connection.setConnectTimeout(Config.NEU_API_TIMEOUT);
+      connection.setReadTimeout(Config.NEU_API_TIMEOUT);
 
       if (Config.USE_GZIP_COMPRESSION_ON_API_REQUESTS) {
         connection.setRequestProperty("Accept-Encoding", "gzip");
